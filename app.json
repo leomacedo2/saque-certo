@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Saque Certo",
+    "slug": "saque-certo",
+    "version": "1.0.2",
+    "orientation": "landscape",
+    "userInterfaceStyle": "dark",
+    "android": {
+      "package": "com.saque.certo"
+    },
+    "plugins": [
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
+        }
+      ],
+      "expo-status-bar",
+      "expo-asset"
+    ]
+  }
+}
