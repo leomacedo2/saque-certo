@@ -2,13 +2,13 @@ import { ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { palette } from './theme';
 
-export function Button({ label, onPress, secondary = false, disabled = false, accessibilityLabel }: {
-  label: string; onPress: () => void; secondary?: boolean; disabled?: boolean; accessibilityLabel?: string;
+export function Button({ label, onPress, secondary = false, disabled = false, accessibilityLabel, large = false }: {
+  label: string; onPress: () => void; secondary?: boolean; disabled?: boolean; accessibilityLabel?: string; large?: boolean;
 }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label}
     accessibilityState={{ disabled }} disabled={disabled} onPress={onPress}
-    style={({ pressed }) => [styles.button, secondary && styles.secondary, disabled && { opacity: 0.35 }, pressed && { opacity: 0.7 }]}>
-    <Text style={[styles.buttonText, secondary && { color: palette.text }]}>{label}</Text>
+    style={({ pressed }) => [styles.button, large && styles.largeButton, secondary && styles.secondary, disabled && { opacity: 0.35 }, pressed && { opacity: 0.7 }]}>
+    <Text style={[styles.buttonText, large && { fontSize: 18 }, secondary && { color: palette.text }]}>{label}</Text>
   </Pressable>;
 }
 export function Dialog({ eyebrow, title, children }: { eyebrow?: string; title: string; children: ReactNode }) {
@@ -29,6 +29,7 @@ export const shared = StyleSheet.create({
 });
 const styles = StyleSheet.create({
   button: { minHeight: 48, paddingHorizontal: 20, paddingVertical: 12, backgroundColor: palette.green, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  largeButton: { minHeight: 64, paddingHorizontal: 28 },
   secondary: { backgroundColor: palette.surface, borderColor: palette.line, borderWidth: 1 },
   buttonText: { color: '#10271D', fontWeight: '800', fontSize: 15, textAlign: 'center' },
   veil: { ...StyleSheet.absoluteFill, backgroundColor: '#040810EF', alignItems: 'center', justifyContent: 'center', zIndex: 5 },

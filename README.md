@@ -1,4 +1,4 @@
-# Saque Certo · v1.0.2
+# Saque Certo · v1.0.3
 
 Assistente de arbitragem para partidas **individuais de tênis de mesa**, feito com React Native, Expo e TypeScript. Ajuda o árbitro a identificar o próximo sacador e a confirmar as trocas de lado, principalmente aos cinco pontos do set decisivo. Complementa o placar físico.
 
@@ -11,11 +11,11 @@ npm ci
 npm start
 ```
 
-No Expo Go, leia o QR Code mostrado pelo Expo, com celular e computador na mesma rede. Para alternativa por túnel: `npx expo start --tunnel`. O passo a passo, os problemas comuns e o roteiro de uma partida completa estão em [GUIA_TESTES.md](GUIA_TESTES.md).
+No Expo Go compatível com SDK 57, leia o QR Code mostrado pelo Expo, com celular e computador na mesma rede. Para alternativa por túnel: `npx expo start --tunnel`. Para reiniciar com cache limpo: `npx expo start --go --clear --port 8082`.
 
 ## Funcionalidades
 
-- Interface escura em paisagem, com duas áreas grandes para marcar pontos.
+- Interface minimalista em paisagem, com duas áreas grandes para marcar pontos e indicadores de sets espelhados junto à divisão central.
 - Jogador A azul e jogador B laranja; cores, pontos e sets acompanham suas identidades.
 - Primeiro toque escolhe o sacador sem marcar ponto.
 - Saque a cada dois pontos e a cada ponto após 10 × 10 no formato padrão.
@@ -25,18 +25,20 @@ No Expo Go, leia o QR Code mostrado pelo Expo, com celular e computador na mesma
 - Inversão manual com confirmação; encerramento de partida com bloqueio de pontos.
 - Desfazer restaura placar, sets, sacador, posições e transições.
 - Partida e histórico salvos no AsyncStorage; oferta de retomada ao reabrir.
-- Aquecimento de dois minutos, com pausa, continuação, reinício e som local opcional.
+- Aquecimento de dois minutos em tela cheia, com pausa, continuação, reinício e alarme local contínuo até a intervenção do árbitro.
 - Tela mantida acesa, vibração opcional, proteção de 250 ms e alto contraste.
 - Formatos casuais; alterações das regras valem para a próxima partida.
-- Backup por versão em pasta externa, conforme [BACKUPS.md](BACKUPS.md).
+- Backup por versão em pasta externa com `npm run backup`.
 
 ## Capturas da v1
 
 Capturas reais da versão web em janela horizontal de 844 × 390. Não são capturas de um aparelho Android.
 
-![Placar v1.0.2 com dimensionamento corrigido](docs/screenshots/placar-v1-0-2.png)
+![Placar minimalista v1.0.3](docs/screenshots/placar-v1-0-3.png)
 
-![Aquecimento v1.0.2](docs/screenshots/aquecimento-v1-0-2.png)
+![Aquecimento em tela cheia v1.0.3](docs/screenshots/aquecimento-v1-0-3.png)
+
+![Alarme com parada explícita v1.0.3](docs/screenshots/alarme-v1-0-3.png)
 
 ![Confirmação obrigatória aos cinco pontos](docs/screenshots/troca-decisiva.png)
 
@@ -52,7 +54,8 @@ src/storage/codec.ts       Validação e serialização dos dados salvos
 src/storage/persistence.ts Fila de gravação para preservar a ordem
 src/hooks/useGame.ts       Recuperação, estado e AsyncStorage
 src/ui/                    Placar, configurações, avisos e aquecimento
-__tests__/                 Testes Jest do domínio e da persistência
+src/audio/                 Controle do alarme em repetição e cancelamento
+__tests__/                 Testes Jest do domínio, persistência e alarme
 scripts/backup.ps1         Backup sem sobrescrever versões anteriores
 ```
 
@@ -67,7 +70,9 @@ npx expo install --check
 npx expo export --platform android --platform web
 ```
 
-Veja [VALIDACAO_V1_0_1.md](VALIDACAO_V1_0_1.md) para a correção de compatibilidade com Expo Go 57 e [VALIDACAO_V1.md](VALIDACAO_V1.md) para o registro da primeira entrega. A exportação Android valida o empacotamento JavaScript; ela não gera um APK nem substitui testes em aparelho físico.
+Na entrega da v1.0.3, os 50 testes, a tipagem e o lint passaram. A exportação Android/web também foi concluída. Os relatórios detalhados e documentos auxiliares ficam arquivados fora do repositório, na pasta local de backups. A exportação Android valida o empacotamento JavaScript; ela não gera um APK nem substitui testes em aparelho físico.
+
+No celular, confira principalmente a troca aos cinco pontos do set decisivo, o próximo sacador antes/depois da troca, Desfazer, retomada da partida e o alarme de aquecimento. Para testar o alarme rapidamente, configure dez segundos, inicie e aguarde 00:00: o som deve repetir até PARAR ALARME. Reiniciar deve interromper o áudio; voltar com o alarme ativo exige confirmação.
 
 ## Regras e decisões
 
@@ -85,10 +90,9 @@ Nos formatos casuais, o empate que inicia os saques de um ponto é **alvo − 1*
 - Expo Go é o ambiente de teste. Um aplicativo Android instalado e independente exige compilação nativa; nenhum APK foi gerado nesta entrega.
 - A partida funciona sem chamadas de rede após carregar. Reabrir um projeto de desenvolvimento no Expo Go pode exigir o servidor do computador; para lançamento offline independente, use uma compilação nativa.
 - Apenas uma partida e seu histórico ficam armazenados; nova partida substitui a anterior após confirmação. Limpar os dados ou desinstalar o app remove esse armazenamento.
-- O cronômetro não é recuperado após sair da tela de aquecimento ou fechar o app. A partida permanece intacta. O som de término depende de volume e recursos de áudio do aparelho.
+- O cronômetro não é recuperado após sair da tela de aquecimento ou fechar o app. A partida permanece intacta. O alarme respeita volume, modo silencioso, saída de áudio e restrições do aparelho; o app não altera o volume global. Não há garantia de reprodução em segundo plano, com a tela bloqueada ou com o app encerrado. Mantenha o app em primeiro plano durante o aquecimento.
 - O histórico usa snapshots completos; partidas excepcionalmente longas aumentam o armazenamento.
-- A imagem de referência citada no documento não veio anexada. A interface foi criada a partir da descrição.
-- Dependências transitivas de desenvolvimento têm alertas registrados em `VALIDACAO_V1.md`.
+- Dependências transitivas de desenvolvimento têm alertas conhecidos; consulte `npm audit` para verificar o estado atual.
 - Fora do escopo: duplas, sistema de aceleração, placares eletrônicos, ranking, torneios, contas e sincronização online.
 
 ## Próximos passos

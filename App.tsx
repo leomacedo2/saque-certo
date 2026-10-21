@@ -24,10 +24,11 @@ function Game() {
   const ready = game.status === 'ready';
   const blocked = !ready || menu || warmup || newMatchPrompt;
   useEffect(() => {
+    // The full-screen timer owns Back, including its alarm exit confirmation.
+    if (warmup) return;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       if (menu) { setMenu(false); return true; }
       if (newMatchPrompt) { setNewMatchPrompt(false); return true; }
-      if (warmup) { setWarmup(false); return true; }
       if (match.pending === 'manual') { game.dispatch({ type: 'cancelManual' }); return true; }
       // Official confirmations must never be dismissed using Android Back.
       if (match.pending || !ready) return true;
@@ -45,17 +46,19 @@ function Game() {
   };
   const confirmNew = () => { setMenu(false); setNewMatchPrompt(true); };
   const lastSet = match.completed.at(-1);
+  if (warmup && ready) return <SafeAreaView style={styles.warmupSafe}>
+    <StatusBar hidden />
+    <Warmup seconds={game.settings.warmupSeconds} onClose={() => setWarmup(false)} />
+  </SafeAreaView>;
   return <SafeAreaView style={styles.safe}>
     <StatusBar hidden />
     <View style={styles.header}>
       <Button label={menu ? '☰ Fechar' : '☰ Menu'} secondary disabled={!ready || newMatchPrompt} onPress={() => setMenu(value => !value)} />
-      <View style={styles.brand}><Text style={styles.brandText}>SAQUE<Text style={{ color: palette.green }}> CERTO</Text><Text style={styles.version}>  V1</Text></Text><Text style={styles.tagline}>ASSISTENTE DE ARBITRAGEM</Text></View>
       <Button label="↶ Desfazer" secondary disabled={!ready || !game.session.history.length || menu || newMatchPrompt || warmup} onPress={() => { game.dispatch({ type: 'undo' }); lastTap.current = -Infinity; }} />
     </View>
     {game.error && ready && <Pressable accessibilityRole="button" onPress={game.retrySave} style={styles.saveError}><Text style={styles.saveErrorText}>{game.error} · Tentar salvar</Text></Pressable>}
     <View style={styles.body}>
-      {warmup ? <Warmup seconds={game.settings.warmupSeconds} sound={game.settings.sound} onClose={() => setWarmup(false)} />
-        : <Scoreboard match={match} highContrast={game.settings.highContrast} blocked={blocked} onPlayer={touchPlayer} />}
+      <Scoreboard match={match} highContrast={game.settings.highContrast} blocked={blocked} onPlayer={touchPlayer} />
       {game.status === 'loading' && <Dialog title="Abrindo o Saque Certo"><ActivityIndicator color={palette.green} /><Text style={shared.body}>Conferindo a partida salva…</Text></Dialog>}
       {(game.status === 'recover' || game.status === 'error') && <Dialog eyebrow="RECUPERAÇÃO" title={game.status === 'recover' ? 'Retomar a partida?' : 'Falha ao abrir a partida'}>
         <Text style={shared.body}>{game.status === 'recover' ? 'Os pontos, sets, posições, saques e o histórico de desfazer foram preservados.' : game.error}</Text>
@@ -84,17 +87,13 @@ function Game() {
         }} /><Button label="Cancelar" secondary onPress={() => setNewMatchPrompt(false)} /></View>
       </Dialog>}
     </View>
-    <View style={styles.status}><View style={[styles.statusDot, { backgroundColor: game.error ? palette.warning : palette.green }]} /><Text style={styles.statusText}>{!ready ? 'ARMAZENAMENTO LOCAL' : game.error ? 'SALVAMENTO PENDENTE' : game.saving ? 'SALVANDO…' : 'PARTIDA SALVA NO DISPOSITIVO'}</Text></View>
   </SafeAreaView>;
 }
 export default function App() { return <SafeAreaProvider><Game /></SafeAreaProvider>; }
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: palette.background, paddingHorizontal: 14 },
+  warmupSafe: { flex: 1, backgroundColor: palette.background },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, gap: 10 },
-  brand: { alignItems: 'center', flexShrink: 1 }, brandText: { color: palette.text, fontWeight: '900', fontSize: 20, letterSpacing: 2 },
-  version: { color: palette.muted, fontSize: 10 }, tagline: { color: palette.muted, fontSize: 8, letterSpacing: 2, marginTop: 3 },
   body: { flex: 1, position: 'relative', minHeight: 0 },
-  status: { height: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  statusDot: { width: 4, height: 4, borderRadius: 2 }, statusText: { color: palette.muted, fontSize: 8, letterSpacing: 1.2 },
   saveError: { padding: 7, backgroundColor: '#473B23', borderRadius: 6 }, saveErrorText: { color: palette.warning, fontSize: 12, textAlign: 'center' },
 });

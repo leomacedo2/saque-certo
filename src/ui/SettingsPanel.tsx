@@ -12,7 +12,7 @@ export function SettingsPanel({ settings, onSave, onClose, onNewMatch, onWarmup,
   const [target, setTarget] = useState(String(settings.target));
   const [duration, setDuration] = useState(String(settings.warmupSeconds));
   const [error, setError] = useState('');
-  const toggle = (key: 'haptics' | 'doubleTapGuard' | 'highContrast' | 'decidingSwitch' | 'sound', label: string) =>
+  const toggle = (key: 'haptics' | 'doubleTapGuard' | 'highContrast' | 'decidingSwitch', label: string) =>
     <View style={styles.row} key={key}><Text style={styles.label}>{label}</Text><Switch accessibilityLabel={label} value={draft[key]} onValueChange={value => setDraft(old => ({ ...old, [key]: value }))} trackColor={{ false: '#344156', true: '#437A64' }} thumbColor={draft[key] ? palette.green : '#A6B4C9'} /></View>;
   const save = () => {
     const points = Number(target);
@@ -43,10 +43,10 @@ export function SettingsPanel({ settings, onSave, onClose, onNewMatch, onWarmup,
         {toggle('highContrast', 'Alto contraste dos números')}
         <Text style={styles.section}>AQUECIMENTO</Text>
         <View style={styles.row}><Text style={styles.label}>Duração (segundos)</Text><TextInput accessibilityLabel="Duração do aquecimento em segundos" keyboardType="number-pad" value={duration} onChangeText={setDuration} maxLength={4} style={styles.input} /></View>
-        {toggle('sound', 'Som ao terminar o aquecimento')}
+        <Text style={shared.body}>Ao terminar, o alarme toca até você pará-lo. A reprodução respeita o áudio e as restrições do dispositivo.</Text>
         {!!error && <Text accessibilityRole="alert" style={{ color: palette.warning }}>{error}</Text>}
         <Button label="Salvar configurações" onPress={save} />
-        <Text style={styles.version}>SAQUE CERTO · V1.0.2</Text>
+        <Text style={styles.version}>SAQUE CERTO · V1.0.3</Text>
       </ScrollView>
     </View>
   </View>;

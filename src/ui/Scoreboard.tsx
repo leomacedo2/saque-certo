@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Match, PlayerId, isDeciding, nextServer, other, playerName } from '../domain/match';
+import { Match, PlayerId, nextServer, other, playerName } from '../domain/match';
 import { palette, playerColors } from './theme';
 import { LargeNumber } from './LargeNumber';
 
@@ -9,11 +9,9 @@ export function Scoreboard({ match, highContrast, blocked, onPlayer }: {
   const server = nextServer(match);
   const players = [match.left, other(match.left)];
   return <View style={styles.container}>
-    <View style={styles.caption}>
-      <Text style={styles.captionText}>{!match.firstServer ? 'Quem começa sacando? Toque no lado do jogador.'
-        : match.winner ? 'Partida encerrada' : match.pending ? 'Pontuação pausada · confirme a troca'
-          : isDeciding(match) ? 'SET DECISIVO · atenção à troca de lados' : 'Toque no lado de quem ganhou o ponto'}</Text>
-    </View>
+    {!match.firstServer && match.completed.length === 0 && match.points.A === 0 && match.points.B === 0 && <View style={styles.caption}>
+      <Text style={styles.captionText}>Quem começa sacando? Toque no lado do jogador.</Text>
+    </View>}
     <View style={styles.court}>
       {players.map((id, index) => {
         const serving = server === id;
@@ -29,17 +27,15 @@ export function Scoreboard({ match, highContrast, blocked, onPlayer }: {
             </View>
           </View>
           <LargeNumber value={String(match.points[id])} color={highContrast ? '#FFFFFF' : color} />
-          <View style={styles.playerFooter}>
-            <Text style={styles.setLabel}>SETS <Text style={[styles.setNumber, { color }]}>{match.sets[id]}</Text></Text>
-            <Text style={styles.side}>{index === 0 ? 'ESQUERDA' : 'DIREITA'}</Text>
+          <View style={[styles.playerFooter, { alignItems: index === 0 ? 'flex-end' : 'flex-start' }]}>
+            <Text accessibilityLabel={`${playerName(id)}: ${match.sets[id]} ${match.sets[id] === 1 ? 'set conquistado' : 'sets conquistados'}`} style={[styles.setNumber, { color }]}>{match.sets[id]}</Text>
           </View>
         </Pressable>;
       })}
     </View>
     <View style={styles.bottom}>
       <Text style={styles.bottomText}>SET {Math.min(match.completed.length + (match.pending === 'betweenSets' || match.winner ? 0 : 1), match.rules.bestOf)}  /  {match.rules.bestOf}</Text>
-      <Text style={styles.bottomText}>{match.rules.target} pontos · diferença de 2</Text>
-      <Text style={styles.bottomText}>{match.rules.target === 11 && match.rules.decidingSwitch ? 'PADRÃO ITTF' : 'FORMATO CASUAL'}</Text>
+      <Text style={styles.bottomText}>Partida de {match.rules.target} pontos</Text>
     </View>
   </View>;
 }
@@ -52,9 +48,8 @@ const styles = StyleSheet.create({
   nameGroup: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   dot: { width: 9, height: 9, borderRadius: 5 }, name: { fontSize: 16, fontWeight: '700' },
   badge: { borderRadius: 7, paddingHorizontal: 10, paddingVertical: 5 }, badgeText: { fontSize: 11, fontWeight: '900', letterSpacing: 1 },
-  playerFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  setLabel: { color: palette.muted, fontSize: 12, fontWeight: '600', letterSpacing: 2 }, setNumber: { fontSize: 24, fontWeight: '800', letterSpacing: 0 },
-  side: { color: palette.muted, fontSize: 10, letterSpacing: 2 },
-  bottom: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 8, paddingBottom: 2 },
+  playerFooter: { alignSelf: 'stretch' },
+  setNumber: { fontSize: 24, fontWeight: '800' },
+  bottom: { flexDirection: 'row', justifyContent: 'center', gap: 24, paddingHorizontal: 8, paddingBottom: 6 },
   bottomText: { color: palette.muted, fontSize: 10, letterSpacing: 0.8 },
 });
