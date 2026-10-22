@@ -1,27 +1,34 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
-import { BestOf, Settings } from '../domain/match';
+import { BestOf, PlayerId, Settings } from '../domain/match';
+import { Timeouts } from '../domain/timeouts';
 import { Button, shared } from './Controls';
 import { palette } from './theme';
 
-export function SettingsPanel({ settings, onSave, onClose, onNewMatch, onWarmup, onSwap, swapDisabled }: {
+export function SettingsPanel({ settings, timeouts, onRestore, restoreDisabled, onSave, onClose, onNewMatch, onWarmup, onSwap, swapDisabled }: {
   settings: Settings; onSave: (settings: Settings) => void; onClose: () => void;
+  timeouts: Timeouts; onRestore: (player: PlayerId) => void; restoreDisabled: boolean;
   onNewMatch: () => void; onWarmup: () => void; onSwap: () => void; swapDisabled: boolean;
 }) {
   const [draft, setDraft] = useState(settings);
   const [target, setTarget] = useState(String(settings.target));
   const [duration, setDuration] = useState(String(settings.warmupSeconds));
+  const [timeoutDuration, setTimeoutDuration] = useState(String(settings.timeoutSeconds));
   const [error, setError] = useState('');
   const toggle = (key: 'haptics' | 'doubleTapGuard' | 'highContrast' | 'decidingSwitch', label: string) =>
     <View style={styles.row} key={key}><Text style={styles.label}>{label}</Text><Switch accessibilityLabel={label} value={draft[key]} onValueChange={value => setDraft(old => ({ ...old, [key]: value }))} trackColor={{ false: '#344156', true: '#437A64' }} thumbColor={draft[key] ? palette.green : '#A6B4C9'} /></View>;
   const save = () => {
     const points = Number(target);
     const seconds = Number(duration);
+    const timeoutSeconds = Number(timeoutDuration);
     if (!/^\d+$/.test(target) || !Number.isInteger(points) || points < 2 || points > 99
       || !/^\d+$/.test(duration) || !Number.isInteger(seconds) || seconds < 10 || seconds > 3600) {
       setError('Use 2 a 99 pontos e 10 a 3600 segundos.'); return;
     }
-    onSave({ ...draft, target: points, warmupSeconds: seconds });
+    if (!/^\d+$/.test(timeoutDuration) || !Number.isInteger(timeoutSeconds) || timeoutSeconds < 1 || timeoutSeconds > 3600) {
+      setError('Use de 1 a 3600 segundos para o tempo técnico.'); return;
+    }
+    onSave({ ...draft, target: points, warmupSeconds: seconds, timeoutSeconds });
   };
   return <View style={styles.overlay} accessibilityViewIsModal>
     <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Fechar configurações sem salvar" onPress={onClose} />
@@ -37,6 +44,14 @@ export function SettingsPanel({ settings, onSave, onClose, onNewMatch, onWarmup,
         {toggle('decidingSwitch', 'Troca aos 5 pontos no set decisivo')}
         <Text style={shared.body}>Troca ao final dos sets: obrigatória. Em formatos casuais, o saque passa a alternar a cada ponto no empate em alvo − 1.</Text>
         <Button label="Inverter lados agora" secondary disabled={swapDisabled} onPress={onSwap} />
+        <Text style={styles.section}>TEMPO TÉCNICO</Text>
+        <Text style={shared.body}>Padrão oficial: 60 segundos e um tempo por jogador na partida inteira. Alterações abaixo valem somente para a próxima partida. Outros valores são formatos casuais.</Text>
+        <View style={styles.options}>{[30, 60, 120, 180].map(seconds => <Button key={seconds} label={seconds === 60 ? '1 min (oficial)' : `${seconds} s`} secondary={Number(timeoutDuration) !== seconds} onPress={() => setTimeoutDuration(String(seconds))} />)}</View>
+        <View style={styles.row}><Text style={styles.label}>Duração personalizada (segundos)</Text><TextInput accessibilityLabel="Duração do tempo técnico em segundos" keyboardType="number-pad" value={timeoutDuration} onChangeText={setTimeoutDuration} maxLength={4} style={styles.input} /></View>
+        <Text style={styles.label}>Quantidade por jogador por partida</Text>
+        <View style={styles.options}>{[0, 1, 2, 3].map(limit => <Pressable key={limit} accessibilityRole="radio" accessibilityState={{ checked: draft.timeoutLimit === limit }} onPress={() => setDraft(old => ({ ...old, timeoutLimit: limit }))} style={[styles.option, draft.timeoutLimit === limit && styles.selected]}><Text style={[styles.optionText, draft.timeoutLimit === limit && { color: palette.green }]}>{limit === 0 ? 'Desativado' : limit === 1 ? '1 (oficial)' : String(limit)}</Text></Pressable>)}</View>
+        <Text style={shared.body}>Corrigir uso indevido na partida atual (exige confirmação):</Text>
+        {(['A', 'B'] as PlayerId[]).map(player => <Button key={player} label={`Restaurar tempo do Jogador ${player}`} secondary disabled={restoreDisabled || timeouts.used[player] === 0} onPress={() => onRestore(player)} />)}
         <Text style={styles.section}>PREFERÊNCIAS</Text>
         {toggle('haptics', 'Vibração dos toques')}
         {toggle('doubleTapGuard', 'Proteção contra toques duplicados (250 ms)')}
@@ -46,7 +61,7 @@ export function SettingsPanel({ settings, onSave, onClose, onNewMatch, onWarmup,
         <Text style={shared.body}>Ao terminar, o alarme toca até você pará-lo. A reprodução respeita o áudio e as restrições do dispositivo.</Text>
         {!!error && <Text accessibilityRole="alert" style={{ color: palette.warning }}>{error}</Text>}
         <Button label="Salvar configurações" onPress={save} />
-        <Text style={styles.version}>SAQUE CERTO · V1.0.3</Text>
+        <Text style={styles.version}>SAQUE CERTO · V1.1.0</Text>
       </ScrollView>
     </View>
   </View>;

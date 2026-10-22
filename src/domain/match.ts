@@ -1,3 +1,5 @@
+import { DEFAULT_TIMEOUT_CONFIG, TimeoutConfig } from './timeouts';
+
 export type PlayerId = 'A' | 'B';
 export type Pair<T> = Record<PlayerId, T>;
 export type BestOf = 1 | 3 | 5 | 7;
@@ -13,8 +15,9 @@ export interface Preferences {
   warmupSeconds: number;
   sound: boolean;
 }
-export interface Settings extends Rules, Preferences {}
+export interface Settings extends Rules, Preferences, TimeoutConfig {}
 export const DEFAULT_SETTINGS: Settings = {
+  ...DEFAULT_TIMEOUT_CONFIG,
   target: 11, bestOf: 3, decidingSwitch: true,
   haptics: false, doubleTapGuard: false, highContrast: false,
   warmupSeconds: 120, sound: false,

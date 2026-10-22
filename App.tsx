@@ -5,11 +5,14 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { PlayerId, nextServer, playerName } from './src/domain/match';
+import { timeoutBlocksPlay } from './src/domain/timeouts';
 import { useGame } from './src/hooks/useGame';
 import { Button, Dialog, shared } from './src/ui/Controls';
 import { Scoreboard } from './src/ui/Scoreboard';
 import { SettingsPanel } from './src/ui/SettingsPanel';
 import { Warmup } from './src/ui/Warmup';
+import { CountdownScreen } from './src/ui/CountdownScreen';
+import { TimeoutButtons, TimeoutDialogs } from './src/ui/TimeoutControls';
 import { palette, playerColors } from './src/ui/theme';
 
 function Game() {
@@ -22,20 +25,24 @@ function Game() {
   const lastTap = useRef(-Infinity);
   const server = nextServer(match);
   const ready = game.status === 'ready';
-  const blocked = !ready || menu || warmup || newMatchPrompt;
+  const timeoutBusy = timeoutBlocksPlay(game.timeouts);
+  const activeTimeout = game.timeouts.active;
+  const blocked = !ready || menu || warmup || newMatchPrompt || timeoutBusy;
   useEffect(() => {
     // The full-screen timer owns Back, including its alarm exit confirmation.
-    if (warmup) return;
+    if (warmup || (ready && activeTimeout)) return;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       if (menu) { setMenu(false); return true; }
       if (newMatchPrompt) { setNewMatchPrompt(false); return true; }
+      if (game.timeouts.request) { game.dispatchTimeout({ type: 'cancelRequest' }); return true; }
+      if (game.timeouts.correction) { game.dispatchTimeout({ type: 'cancelRestore' }); return true; }
       if (match.pending === 'manual') { game.dispatch({ type: 'cancelManual' }); return true; }
       // Official confirmations must never be dismissed using Android Back.
       if (match.pending || !ready) return true;
       return false;
     });
     return () => subscription.remove();
-  }, [menu, warmup, newMatchPrompt, match.pending, ready, game]);
+  }, [menu, warmup, newMatchPrompt, match.pending, ready, game, activeTimeout]);
   const touchPlayer = (player: PlayerId) => {
     if (blocked || match.pending || match.winner) return;
     const now = Date.now();
@@ -46,6 +53,20 @@ function Game() {
   };
   const confirmNew = () => { setMenu(false); setNewMatchPrompt(true); };
   const lastSet = match.completed.at(-1);
+  if (activeTimeout && ready) return <SafeAreaView style={styles.warmupSafe}>
+    <StatusBar hidden />
+    {game.error && <Pressable accessibilityRole="button" onPress={game.retrySave} style={styles.saveError}><Text style={styles.saveErrorText}>{game.error} · Tentar salvar</Text></Pressable>}
+    <CountdownScreen timer={activeTimeout.timer} initialSeconds={game.timeouts.config.timeoutSeconds}
+      onToggle={now => game.dispatchTimeout({ type: 'toggleTimer', now })}
+      onClose={() => game.dispatchTimeout({ type: 'end' })}
+      technical={{
+        label: activeTimeout.who === 'both' ? 'Tempo técnico · Jogador A' : `Tempo técnico · ${playerName(activeTimeout.who)}`,
+        color: activeTimeout.who === 'both' ? playerColors.A : playerColors[activeTimeout.who],
+        secondLabel: activeTimeout.who === 'both' ? { label: ' e Jogador B', color: playerColors.B } : undefined,
+        started: activeTimeout.started,
+        onCancel: () => game.dispatchTimeout({ type: 'cancelBeforeStart' }),
+      }} />
+  </SafeAreaView>;
   if (warmup && ready) return <SafeAreaView style={styles.warmupSafe}>
     <StatusBar hidden />
     <Warmup seconds={game.settings.warmupSeconds} onClose={() => setWarmup(false)} />
@@ -53,15 +74,16 @@ function Game() {
   return <SafeAreaView style={styles.safe}>
     <StatusBar hidden />
     <View style={styles.header}>
-      <Button label={menu ? '☰ Fechar' : '☰ Menu'} secondary disabled={!ready || newMatchPrompt} onPress={() => setMenu(value => !value)} />
-      <Button label="↶ Desfazer" secondary disabled={!ready || !game.session.history.length || menu || newMatchPrompt || warmup} onPress={() => { game.dispatch({ type: 'undo' }); lastTap.current = -Infinity; }} />
+      <Button label={menu ? '☰ Fechar' : '☰ Menu'} secondary disabled={!ready || newMatchPrompt || timeoutBusy} onPress={() => setMenu(value => !value)} />
+      <TimeoutButtons match={match} timeouts={game.timeouts} disabled={blocked} dispatch={game.dispatchTimeout} />
+      <Button label="↶ Desfazer" secondary disabled={!ready || !game.session.history.length || menu || newMatchPrompt || warmup || timeoutBusy} onPress={() => { game.dispatch({ type: 'undo' }); lastTap.current = -Infinity; }} />
     </View>
     {game.error && ready && <Pressable accessibilityRole="button" onPress={game.retrySave} style={styles.saveError}><Text style={styles.saveErrorText}>{game.error} · Tentar salvar</Text></Pressable>}
     <View style={styles.body}>
       <Scoreboard match={match} highContrast={game.settings.highContrast} blocked={blocked} onPlayer={touchPlayer} />
       {game.status === 'loading' && <Dialog title="Abrindo o Saque Certo"><ActivityIndicator color={palette.green} /><Text style={shared.body}>Conferindo a partida salva…</Text></Dialog>}
       {(game.status === 'recover' || game.status === 'error') && <Dialog eyebrow="RECUPERAÇÃO" title={game.status === 'recover' ? 'Retomar a partida?' : 'Falha ao abrir a partida'}>
-        <Text style={shared.body}>{game.status === 'recover' ? 'Os pontos, sets, posições, saques e o histórico de desfazer foram preservados.' : game.error}</Text>
+        <Text style={shared.body}>{game.status === 'recover' ? 'Pontos, sets, posições, saques, tempos técnicos e histórico de desfazer foram preservados.' : game.error}</Text>
         {game.saved && <Text style={shared.strong}>A {game.saved.session.current.points.A} × {game.saved.session.current.points.B} B · Sets {game.saved.session.current.sets.A} × {game.saved.session.current.sets.B}</Text>}
         <View style={shared.actions}><Button label={game.status === 'recover' ? 'Retomar partida' : 'Tentar novamente'} onPress={game.status === 'recover' ? game.resume : () => { void game.retryLoad(); }} /><Button label="Iniciar nova partida" secondary onPress={() => setNewMatchPrompt(true)} /></View>
       </Dialog>}
@@ -78,9 +100,12 @@ function Game() {
         <Text style={shared.body}>Pontuação bloqueada. Use Desfazer para corrigir o último ponto.</Text>
         <View style={shared.actions}><Button label="Nova partida" onPress={confirmNew} /></View>
       </Dialog>}
-      {menu && ready && <SettingsPanel settings={game.settings} onClose={() => setMenu(false)} onSave={settings => { game.setSettings(settings); setMenu(false); }} onNewMatch={confirmNew} onWarmup={() => { setMenu(false); setWarmup(true); }} swapDisabled={!!match.pending || !!match.winner || warmup} onSwap={() => { setMenu(false); game.dispatch({ type: 'requestManual' }); }} />}
+      {menu && ready && <SettingsPanel settings={game.settings} timeouts={game.timeouts} restoreDisabled={!!match.pending || timeoutBusy}
+        onRestore={player => { setMenu(false); game.dispatchTimeout({ type: 'requestRestore', player }); }}
+        onClose={() => setMenu(false)} onSave={settings => { game.setSettings(settings); setMenu(false); }} onNewMatch={confirmNew} onWarmup={() => { setMenu(false); setWarmup(true); }} swapDisabled={!!match.pending || !!match.winner || warmup} onSwap={() => { setMenu(false); game.dispatch({ type: 'requestManual' }); }} />}
+      {ready && <TimeoutDialogs match={match} timeouts={game.timeouts} dispatch={game.dispatchTimeout} />}
       {newMatchPrompt && <Dialog eyebrow="NOVA PARTIDA" title="Zerar pontos e sets?">
-        <Text style={shared.body}>O sacador inicial e o histórico da partida serão apagados. Suas configurações serão mantidas.</Text>
+        <Text style={shared.body}>O sacador inicial e o histórico serão apagados. Os tempos técnicos serão restaurados conforme suas configurações.</Text>
         <View style={shared.actions}><Button label="Confirmar nova partida" onPress={() => {
           if (ready) game.restart(); else game.discard();
           setNewMatchPrompt(false); setWarmup(false); lastTap.current = -Infinity;

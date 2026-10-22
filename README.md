@@ -1,4 +1,4 @@
-# Saque Certo · v1.0.3
+# Saque Certo · v1.1.0
 
 Assistente de arbitragem para partidas **individuais de tênis de mesa**, feito com React Native, Expo e TypeScript. Ajuda o árbitro a identificar o próximo sacador e a confirmar as trocas de lado, principalmente aos cinco pontos do set decisivo. Complementa o placar físico.
 
@@ -26,6 +26,7 @@ No Expo Go compatível com SDK 57, leia o QR Code mostrado pelo Expo, com celula
 - Desfazer restaura placar, sets, sacador, posições e transições.
 - Partida e histórico salvos no AsyncStorage; oferta de retomada ao reabrir.
 - Aquecimento de dois minutos em tela cheia, com pausa, continuação, reinício e alarme local contínuo até a intervenção do árbitro.
+- Tempo técnico por jogador, com pedido individual ou simultâneo, confirmação, cronômetro próprio e recuperação ao reabrir.
 - Tela mantida acesa, vibração opcional, proteção de 250 ms e alto contraste.
 - Formatos casuais; alterações das regras valem para a próxima partida.
 - Backup por versão em pasta externa com `npm run backup`.
@@ -33,6 +34,10 @@ No Expo Go compatível com SDK 57, leia o QR Code mostrado pelo Expo, com celula
 ## Capturas da v1
 
 Capturas reais da versão web em janela horizontal de 844 × 390. Não são capturas de um aparelho Android.
+
+![Tempos técnicos acompanham os jogadores após a troca de lados](docs/screenshots/placar-v1-1-0.png)
+
+![Tempo técnico de A inicialmente parado](docs/screenshots/tempo-tecnico-v1-1-0.png)
 
 ![Placar minimalista v1.0.3](docs/screenshots/placar-v1-0-3.png)
 
@@ -70,9 +75,23 @@ npx expo install --check
 npx expo export --platform android --platform web
 ```
 
-Na entrega da v1.0.3, os 50 testes, a tipagem e o lint passaram. A exportação Android/web também foi concluída. Os relatórios detalhados e documentos auxiliares ficam arquivados fora do repositório, na pasta local de backups. A exportação Android valida o empacotamento JavaScript; ela não gera um APK nem substitui testes em aparelho físico.
+Os relatórios detalhados e o guia de testes ficam arquivados fora do repositório, na pasta local de backups. A exportação Android valida o empacotamento JavaScript; ela não gera um APK nem substitui testes em aparelho físico.
 
 No celular, confira principalmente a troca aos cinco pontos do set decisivo, o próximo sacador antes/depois da troca, Desfazer, retomada da partida e o alarme de aquecimento. Para testar o alarme rapidamente, configure dez segundos, inicie e aguarde 00:00: o som deve repetir até PARAR ALARME. Reiniciar deve interromper o áudio; voltar com o alarme ativo exige confirmação.
+
+## Tempo Técnico
+
+O padrão oficial é **um tempo de até um minuto por jogador durante a partida inteira**, sem renovação a cada set. Pedidos simultâneos consomem o direito de ambos e usam um único intervalo. Referência: [ITTF Statutes 2026, itens 3.4.4.2 a 3.4.4.2.6](https://db.ittf.com/sites/default/files/public/2026-02/2026_Statutes_v1_consolidated_clean.pdf).
+
+Após selecionar o primeiro sacador, use **Tempo A** ou **Tempo B**. Os botões mostram a disponibilidade e acompanham as posições dos jogadores. Confirme o pedido individual ou selecione **Ambos os jogadores** antes de confirmar. Só a confirmação desconta o direito; o cronômetro abre parado. Toque em **Iniciar**, pause/continue se necessário e use **Encerrar tempo** para voltar. Encerrar antecipadamente mantém o pedido consumido. Ao chegar a 00:00, o alarme repete até **ENCERRAR TEMPO**; o placar fica bloqueado durante o intervalo.
+
+Antes do primeiro início, **Cancelar solicitação** exige confirmação e devolve o tempo. Depois do início, inclusive se pausado, uma correção só pode ser feita no Menu → Tempo Técnico → **Restaurar tempo do Jogador A/B**, com confirmação e sem ultrapassar o limite. O Desfazer do placar atua somente sobre pontos e ações de arbitragem: não devolve nem remove tempos técnicos.
+
+No menu, escolha 30, 60, 120 ou 180 segundos, ou informe de 1 a 3600 segundos; a quantidade pode ser 0, 1, 2 ou 3 por jogador. As alterações valem **somente para a próxima partida**. Quantidade zero oculta os botões. Durações e quantidades alternativas são regras personalizadas para partidas informais.
+
+Os pedidos pendentes, os usos, as correções pendentes e o cronômetro são salvos. Ao retomar, um intervalo iniciado considera o tempo transcorrido; se já tiver vencido, mostra zero e aguarda encerramento. Uma pausa continua pausada e um pedido aceito não é descontado novamente. Partidas salvas antes da funcionalidade são migradas preservando pontos, sets, lados e histórico. O relógio de aquecimento continua separado.
+
+Para testar rapidamente, configure três segundos e dois tempos, salve e inicie nova partida. Faça um pedido conjunto: ambos devem ficar com um tempo, com um único contador parado em 00:03. Inicie, aguarde zero, encerre e confira pontos e saque. Teste também cancelar antes de iniciar, corrigir pelo menu, trocar de lados e fechar/reabrir com um intervalo pausado.
 
 ## Regras e decisões
 

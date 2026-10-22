@@ -1,6 +1,7 @@
 import { DEFAULT_SETTINGS, Match, Session, Settings, other } from '../domain/match';
+import { canRequestTimeout, DEFAULT_TIMEOUT_CONFIG, newTimeouts, timeoutPlayers, Timeouts } from '../domain/timeouts';
 
-export interface SavedGame { schema: 1; settings: Settings; session: Session }
+export interface SavedGame { schema: 2; settings: Settings; session: Session; timeouts: Timeouts }
 const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 const integer = (value: unknown, min = 0, max = 1_000_000): value is number =>
@@ -13,7 +14,30 @@ export function validSettings(value: unknown): value is Settings {
   return record(value) && integer(value.target, 2, 99)
     && [1, 3, 5, 7].includes(value.bestOf as number)
     && ['decidingSwitch', 'haptics', 'doubleTapGuard', 'highContrast', 'sound'].every(key => typeof value[key] === 'boolean')
-    && integer(value.warmupSeconds, 10, 3600);
+    && integer(value.warmupSeconds, 10, 3600)
+    && validTimeoutConfig(value);
+}
+function validTimeoutConfig(value: unknown): boolean {
+  return record(value) && integer(value.timeoutSeconds, 1, 3600) && integer(value.timeoutLimit, 0, 3);
+}
+function validTimeouts(value: unknown, match: Match): value is Timeouts {
+  const who = (v: unknown) => player(v) || v === 'both';
+  if (!record(value) || !validTimeoutConfig(value.config) || !record(value.config) || !pair(value.used)
+    || value.used.A > (value.config.timeoutLimit as number) || value.used.B > (value.config.timeoutLimit as number)
+    || !(value.request === null || who(value.request)) || !(value.correction === null || player(value.correction))) return false;
+  if ([value.request, value.active, value.correction].filter(v => v !== null).length > 1) return false;
+  if (value.active !== null) {
+    const active = value.active;
+    if (!record(active) || !who(active.who) || !record(active.timer) || typeof active.started !== 'boolean'
+      || !integer(active.timer.remainingMs, 0, (value.config.timeoutSeconds as number) * 1000)
+      || !(active.timer.deadline === null || (typeof active.timer.deadline === 'number' && Number.isSafeInteger(active.timer.deadline) && active.timer.deadline >= 0))
+      || !timeoutPlayers(active.who as 'A' | 'B' | 'both').every(id => (value.used as { A: number; B: number })[id] >= 1)
+      || !match.firstServer || match.pending || match.winner) return false;
+    if (!active.started && (active.timer.deadline !== null || active.timer.remainingMs !== (value.config.timeoutSeconds as number) * 1000)) return false;
+  }
+  if (value.request !== null && !canRequestTimeout(value as unknown as Timeouts, match, value.request as 'A' | 'B' | 'both')) return false;
+  if (value.correction !== null && (match.pending || value.used[value.correction as 'A' | 'B'] <= 0)) return false;
+  return true;
 }
 function validMatch(value: unknown): value is Match {
   if (!record(value) || !record(value.rules)) return false;
@@ -52,13 +76,18 @@ function validMatch(value: unknown): value is Match {
   }
   return true;
 }
-export function encodeGame(settings: Settings, session: Session): string {
-  return JSON.stringify({ schema: 1, settings, session } satisfies SavedGame);
+export function encodeGame(settings: Settings, session: Session, timeouts: Timeouts = newTimeouts(settings)): string {
+  return JSON.stringify({ schema: 2, settings, session, timeouts } satisfies SavedGame);
 }
 export function decodeGame(raw: string): SavedGame {
   const data: unknown = JSON.parse(raw);
-  if (!record(data) || data.schema !== 1 || !validSettings(data.settings) || !record(data.session)
+  if (!record(data) || ![1, 2].includes(data.schema as number) || !record(data.settings)) throw new Error('Arquivo de partida inválido ou incompatível.');
+  // Old saves predate timeouts: keep the match/history and grant the default rights.
+  const settings = data.schema === 1 ? { ...DEFAULT_TIMEOUT_CONFIG, ...data.settings } : data.settings;
+  if (!validSettings(settings) || !record(data.session)
     || !validMatch(data.session.current) || !Array.isArray(data.session.history)
     || !data.session.history.every(validMatch)) throw new Error('Arquivo de partida inválido ou incompatível.');
-  return data as unknown as SavedGame;
+  const timeouts = data.schema === 1 ? newTimeouts(settings) : data.timeouts;
+  if (!validTimeouts(timeouts, data.session.current)) throw new Error('Estado de tempo técnico inválido.');
+  return { schema: 2, settings, session: data.session as unknown as Session, timeouts };
 }
