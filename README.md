@@ -1,4 +1,4 @@
-# Saque Certo · v1.1.0
+# Saque Certo · v1.2.0
 
 Assistente de arbitragem para partidas **individuais de tênis de mesa**, feito com React Native, Expo e TypeScript. Ajuda o árbitro a identificar o próximo sacador e a confirmar as trocas de lado, principalmente aos cinco pontos do set decisivo. Complementa o placar físico.
 
@@ -15,8 +15,8 @@ No Expo Go compatível com SDK 57, leia o QR Code mostrado pelo Expo, com celula
 
 ## Funcionalidades
 
-- Interface minimalista em paisagem, com duas áreas grandes para marcar pontos e indicadores de sets espelhados junto à divisão central.
-- Jogador A azul e jogador B laranja; cores, pontos e sets acompanham suas identidades.
+- Interface minimalista em paisagem, com duas áreas grandes para marcar pontos e indicadores numéricos de sets no centro do cabeçalho.
+- Jogador A azul e jogador B laranja por padrão; oito cores disponíveis, com bloqueio de combinações iguais ou muito próximas. Cores, sets e tempos acompanham os jogadores após trocar de lado.
 - Primeiro toque escolhe o sacador sem marcar ponto.
 - Saque a cada dois pontos e a cada ponto após 10 × 10 no formato padrão.
 - Set com diferença mínima de dois; set único e melhor de 3, 5 ou 7.
@@ -35,7 +35,9 @@ No Expo Go compatível com SDK 57, leia o QR Code mostrado pelo Expo, com celula
 
 Capturas reais da versão web em janela horizontal de 844 × 390. Não são capturas de um aparelho Android.
 
-![Tempos técnicos acompanham os jogadores após a troca de lados](docs/screenshots/placar-v1-1-0.png)
+![Cores no pré-jogo e sets no cabeçalho](docs/screenshots/pre-partida-v1-2-0.png)
+
+![Cores e tempos acompanham os jogadores após a troca de lados](docs/screenshots/placar-v1-2-0.png)
 
 ![Tempo técnico de A inicialmente parado](docs/screenshots/tempo-tecnico-v1-1-0.png)
 
@@ -79,13 +81,19 @@ Os relatórios detalhados e o guia de testes ficam arquivados fora do repositór
 
 No celular, confira principalmente a troca aos cinco pontos do set decisivo, o próximo sacador antes/depois da troca, Desfazer, retomada da partida e o alarme de aquecimento. Para testar o alarme rapidamente, configure dez segundos, inicie e aguarde 00:00: o som deve repetir até PARAR ALARME. Reiniciar deve interromper o áudio; voltar com o alarme ativo exige confirmação.
 
+## Cores e cabeçalho
+
+Antes de escolher o primeiro sacador, use **Cor A** e **Cor B**. A seleção é salva imediatamente. Escolher o sacador mantém 0 × 0 e substitui esses controles por **Tempo A/B**; novos sets não voltam ao pré-jogo. Os sets ficam apenas no topo, entre os controles. Os pontos permanecem brancos.
+
+Durante a partida, as cores podem ser alteradas pelo Menu, sem mudar pontos, saque ou tempos. Não há gesto de toque longo. **Restaurar tempo técnico** aparece uma única vez: primeiro no menu durante uma partida em andamento com uso corrigível; nos demais casos, na seção Tempo Técnico. Dados antigos são migrados com as cores padrão.
+
 ## Tempo Técnico
 
 O padrão oficial é **um tempo de até um minuto por jogador durante a partida inteira**, sem renovação a cada set. Pedidos simultâneos consomem o direito de ambos e usam um único intervalo. Referência: [ITTF Statutes 2026, itens 3.4.4.2 a 3.4.4.2.6](https://db.ittf.com/sites/default/files/public/2026-02/2026_Statutes_v1_consolidated_clean.pdf).
 
 Após selecionar o primeiro sacador, use **Tempo A** ou **Tempo B**. Os botões mostram a disponibilidade e acompanham as posições dos jogadores. Confirme o pedido individual ou selecione **Ambos os jogadores** antes de confirmar. Só a confirmação desconta o direito; o cronômetro abre parado. Toque em **Iniciar**, pause/continue se necessário e use **Encerrar tempo** para voltar. Encerrar antecipadamente mantém o pedido consumido. Ao chegar a 00:00, o alarme repete até **ENCERRAR TEMPO**; o placar fica bloqueado durante o intervalo.
 
-Antes do primeiro início, **Cancelar solicitação** exige confirmação e devolve o tempo. Depois do início, inclusive se pausado, uma correção só pode ser feita no Menu → Tempo Técnico → **Restaurar tempo do Jogador A/B**, com confirmação e sem ultrapassar o limite. O Desfazer do placar atua somente sobre pontos e ações de arbitragem: não devolve nem remove tempos técnicos.
+Antes do primeiro início, **Cancelar solicitação** exige confirmação e devolve o tempo. Depois do início, inclusive se pausado, uma correção só pode ser feita no Menu → **Restaurar tempo técnico** → jogador, com confirmação e sem ultrapassar o limite. O Desfazer do placar atua somente sobre pontos e ações de arbitragem: não devolve nem remove tempos técnicos.
 
 No menu, escolha 30, 60, 120 ou 180 segundos, ou informe de 1 a 3600 segundos; a quantidade pode ser 0, 1, 2 ou 3 por jogador. As alterações valem **somente para a próxima partida**. Quantidade zero oculta os botões. Durações e quantidades alternativas são regras personalizadas para partidas informais.
 

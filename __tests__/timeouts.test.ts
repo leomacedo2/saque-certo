@@ -220,7 +220,7 @@ describe('persistência e compatibilidade', () => {
     const original = match(started(), { type: 'point', player: 'B' });
     const { timeoutLimit: _limit, timeoutSeconds: _seconds, ...oldSettings } = DEFAULT_SETTINGS;
     const saved = decodeGame(JSON.stringify({ schema: 1, settings: oldSettings, session: original.session }));
-    expect(saved.schema).toBe(2);
+    expect(saved.schema).toBe(3);
     expect(saved.session).toEqual(original.session);
     expect(saved.settings.timeoutLimit).toBe(1);
     expect(saved.timeouts.used).toEqual({ A: 0, B: 0 });

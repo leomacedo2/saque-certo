@@ -1,7 +1,8 @@
 import { DEFAULT_SETTINGS, Match, Session, Settings, other } from '../domain/match';
 import { canRequestTimeout, DEFAULT_TIMEOUT_CONFIG, newTimeouts, timeoutPlayers, Timeouts } from '../domain/timeouts';
+import { DEFAULT_PLAYER_COLORS, validPlayerColors } from '../domain/colors';
 
-export interface SavedGame { schema: 2; settings: Settings; session: Session; timeouts: Timeouts }
+export interface SavedGame { schema: 3; settings: Settings; session: Session; timeouts: Timeouts }
 const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 const integer = (value: unknown, min = 0, max = 1_000_000): value is number =>
@@ -15,7 +16,7 @@ export function validSettings(value: unknown): value is Settings {
     && [1, 3, 5, 7].includes(value.bestOf as number)
     && ['decidingSwitch', 'haptics', 'doubleTapGuard', 'highContrast', 'sound'].every(key => typeof value[key] === 'boolean')
     && integer(value.warmupSeconds, 10, 3600)
-    && validTimeoutConfig(value);
+    && validTimeoutConfig(value) && validPlayerColors(value.colors);
 }
 function validTimeoutConfig(value: unknown): boolean {
   return record(value) && integer(value.timeoutSeconds, 1, 3600) && integer(value.timeoutLimit, 0, 3);
@@ -77,17 +78,18 @@ function validMatch(value: unknown): value is Match {
   return true;
 }
 export function encodeGame(settings: Settings, session: Session, timeouts: Timeouts = newTimeouts(settings)): string {
-  return JSON.stringify({ schema: 2, settings, session, timeouts } satisfies SavedGame);
+  return JSON.stringify({ schema: 3, settings, session, timeouts } satisfies SavedGame);
 }
 export function decodeGame(raw: string): SavedGame {
   const data: unknown = JSON.parse(raw);
-  if (!record(data) || ![1, 2].includes(data.schema as number) || !record(data.settings)) throw new Error('Arquivo de partida inválido ou incompatível.');
+  if (!record(data) || ![1, 2, 3].includes(data.schema as number) || !record(data.settings)) throw new Error('Arquivo de partida inválido ou incompatível.');
   // Old saves predate timeouts: keep the match/history and grant the default rights.
-  const settings = data.schema === 1 ? { ...DEFAULT_TIMEOUT_CONFIG, ...data.settings } : data.settings;
+  const legacySettings = data.schema === 1 ? { ...DEFAULT_TIMEOUT_CONFIG, ...data.settings } : data.settings;
+  const settings = data.schema === 3 ? legacySettings : { colors: DEFAULT_PLAYER_COLORS, ...legacySettings };
   if (!validSettings(settings) || !record(data.session)
     || !validMatch(data.session.current) || !Array.isArray(data.session.history)
     || !data.session.history.every(validMatch)) throw new Error('Arquivo de partida inválido ou incompatível.');
   const timeouts = data.schema === 1 ? newTimeouts(settings) : data.timeouts;
   if (!validTimeouts(timeouts, data.session.current)) throw new Error('Estado de tempo técnico inválido.');
-  return { schema: 2, settings, session: data.session as unknown as Session, timeouts };
+  return { schema: 3, settings, session: data.session as unknown as Session, timeouts };
 }

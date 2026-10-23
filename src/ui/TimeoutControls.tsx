@@ -1,26 +1,20 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Match, other, playerName } from '../domain/match';
+import { Match, playerName } from '../domain/match';
 import { canRequestTimeout, TimeoutAction, timeoutRemaining, Timeouts } from '../domain/timeouts';
 import { Button, Dialog, shared } from './Controls';
-import { playerColors } from './theme';
 
-export function TimeoutButtons({ match, timeouts, disabled, dispatch }: {
-  match: Match; timeouts: Timeouts; disabled: boolean; dispatch: (action: TimeoutAction) => void;
+export function TimeoutPlayerButton({ player, color, match, timeouts, disabled, dispatch }: {
+  player: 'A' | 'B'; color: string; match: Match; timeouts: Timeouts; disabled: boolean; dispatch: (action: TimeoutAction) => void;
 }) {
-  if (timeouts.config.timeoutLimit === 0) return null;
-  return <View style={styles.buttons}>
-    {[match.left, other(match.left)].map(player => {
       const remaining = timeoutRemaining(timeouts, player);
       const unavailable = disabled || !canRequestTimeout(timeouts, match, player);
       return <Pressable key={player} accessibilityRole="button" disabled={unavailable} accessibilityState={{ disabled: unavailable }}
         accessibilityLabel={`Tempo ${player}, ${remaining} ${remaining === 1 ? 'disponível' : 'disponíveis'}`}
         onPress={() => dispatch({ type: 'request', who: player })}
-        style={({ pressed }) => [styles.button, { borderColor: playerColors[player], opacity: unavailable ? 0.4 : pressed ? 0.7 : 1 }]}>
-        <Text style={[styles.name, { color: playerColors[player] }]}>Tempo {player}</Text>
-        <Text style={[styles.count, { color: playerColors[player] }]}>{remaining === 0 ? 'Tempo utilizado' : `${remaining} ${remaining === 1 ? 'disponível' : 'disponíveis'}`}</Text>
+        style={({ pressed }) => [styles.button, { borderColor: color, opacity: unavailable ? 0.4 : pressed ? 0.7 : 1 }]}>
+        <Text style={[styles.name, { color }]}>Tempo {player}</Text>
+        <Text style={[styles.count, { color }]}>{remaining === 0 ? 'Tempo utilizado' : `${remaining} ${remaining === 1 ? 'disponível' : 'disponíveis'}`}</Text>
       </Pressable>;
-    })}
-  </View>;
 }
 export function TimeoutDialogs({ match, timeouts, dispatch }: {
   match: Match; timeouts: Timeouts; dispatch: (action: TimeoutAction) => void;
@@ -49,7 +43,6 @@ export function TimeoutDialogs({ match, timeouts, dispatch }: {
   return null;
 }
 const styles = StyleSheet.create({
-  buttons: { flexDirection: 'row', gap: 8, flexShrink: 1 },
-  button: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, minHeight: 48, justifyContent: 'center', alignItems: 'center' },
+  button: { width: '100%', borderWidth: 1, borderRadius: 10, paddingHorizontal: 6, minHeight: 48, justifyContent: 'center', alignItems: 'center' },
   name: { fontSize: 14, fontWeight: '800' }, count: { fontSize: 10 },
 });
