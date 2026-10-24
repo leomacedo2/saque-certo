@@ -26,6 +26,7 @@ test('pré-jogo depende de primeiro sacador indefinido, não só 0 × 0', () => 
   let game = newGame();
   expect(isPreMatch(game.session.current)).toBe(true);
   game = reduceGame(game, { kind: 'match', action: { type: 'selectServer', player: 'A' } });
+  game = reduceGame(game, { kind: 'preparation', action: { type: 'skipWarmup' } });
   expect(game.session.current.points).toEqual({ A: 0, B: 0 });
   expect(isPreMatch(game.session.current)).toBe(false);
   for (let i = 0; i < 11; i++) game = reduceGame(game, { kind: 'match', action: { type: 'point', player: 'A' } });
@@ -37,6 +38,7 @@ test('pré-jogo depende de primeiro sacador indefinido, não só 0 × 0', () => 
 test('cores persistem sem afetar pontos, saques, histórico ou tempos consumidos', () => {
   let game = newGame();
   game = reduceGame(game, { kind: 'match', action: { type: 'selectServer', player: 'A' } });
+  game = reduceGame(game, { kind: 'preparation', action: { type: 'skipWarmup' } });
   game = reduceGame(game, { kind: 'match', action: { type: 'point', player: 'B' } });
   game = reduceGame(game, { kind: 'timeout', action: { type: 'request', who: 'A' } });
   game = reduceGame(game, { kind: 'timeout', action: { type: 'confirmRequest' } });
@@ -54,7 +56,7 @@ test.each([1, 2])('migra save schema %i para cores padrão sem perda de estado',
   const { colors: _colors, ...settings } = DEFAULT_SETTINGS;
   const data = { schema, settings, session: game.session, timeouts: game.timeouts };
   const loaded = decodeGame(JSON.stringify(data));
-  expect(loaded.schema).toBe(3);
+  expect(loaded.schema).toBe(4);
   expect(loaded.settings.colors).toEqual(DEFAULT_PLAYER_COLORS);
   expect(loaded.session).toEqual(game.session);
   expect(loaded.timeouts).toEqual(game.timeouts);
@@ -69,6 +71,7 @@ test('restaurar só é promovido com consumo corrigível em partida em andamento
   let game = newGame();
   expect(promoteTimeoutRestore(game.session.current, game.timeouts, false)).toBe(false);
   game = reduceGame(game, { kind: 'match', action: { type: 'selectServer', player: 'A' } });
+  game = reduceGame(game, { kind: 'preparation', action: { type: 'skipWarmup' } });
   game = reduceGame(game, { kind: 'timeout', action: { type: 'request', who: 'A' } });
   game = reduceGame(game, { kind: 'timeout', action: { type: 'confirmRequest' } });
   game = reduceGame(game, { kind: 'timeout', action: { type: 'end' } });

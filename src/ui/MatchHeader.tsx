@@ -2,15 +2,14 @@ import { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Match, other, PlayerId, Pair } from '../domain/match';
 import { TimeoutAction, Timeouts } from '../domain/timeouts';
-import { isPreMatch } from './matchPresentation';
 import { TimeoutPlayerButton } from './TimeoutControls';
 
-export function MatchHeader({ match, timeouts, colors, disabled, leading, trailing, onColor, dispatch }: {
+export function MatchHeader({ match, timeouts, colors, disabled, preMatch, leading, trailing, onColor, dispatch }: {
   match: Match; timeouts: Timeouts; colors: Pair<string>; disabled: boolean; leading: ReactNode; trailing: ReactNode;
   onColor: (player: PlayerId) => void; dispatch: (action: TimeoutAction) => void;
+  preMatch: boolean;
 }) {
   const players = [match.left, other(match.left)] as const;
-  const preMatch = isPreMatch(match);
   const control = (player: PlayerId) => <View style={styles.control} key={`control-${player}`}>
     {preMatch ? <Pressable accessibilityRole="button" accessibilityLabel={`Cor ${player}`} disabled={disabled || !!match.pending}
       onPress={() => onColor(player)} style={[styles.colorButton, { borderColor: colors[player], opacity: disabled ? 0.4 : 1 }]}>

@@ -6,11 +6,11 @@ import { decodeGame, encodeGame } from '../src/storage/codec';
 
 const timeout = (game: GameState, action: TimeoutAction) => reduceGame(game, { kind: 'timeout', action });
 const match = (game: GameState, action: Action) => reduceGame(game, { kind: 'match', action });
-const started = (overrides = {}) => match(newGame({ ...DEFAULT_SETTINGS, ...overrides }), { type: 'selectServer', player: 'A' });
+const started = (overrides = {}) => reduceGame(match(newGame({ ...DEFAULT_SETTINGS, ...overrides }), { type: 'selectServer', player: 'A' }), { kind: 'preparation', action: { type: 'skipWarmup' } });
 const accepted = (game = started(), who: 'A' | 'B' | 'both' = 'A') => timeout(timeout(game, { type: 'request', who }), { type: 'confirmRequest' });
 const roundtrip = (game: GameState) => {
-  const saved = decodeGame(encodeGame(DEFAULT_SETTINGS, game.session, game.timeouts));
-  return { session: saved.session, timeouts: saved.timeouts };
+  const saved = decodeGame(encodeGame(DEFAULT_SETTINGS, game.session, game.timeouts, game));
+  return { session: saved.session, timeouts: saved.timeouts, phase: saved.phase, warmup: saved.warmup };
 };
 
 describe('pedido e consumo de tempo técnico', () => {
@@ -220,7 +220,7 @@ describe('persistência e compatibilidade', () => {
     const original = match(started(), { type: 'point', player: 'B' });
     const { timeoutLimit: _limit, timeoutSeconds: _seconds, ...oldSettings } = DEFAULT_SETTINGS;
     const saved = decodeGame(JSON.stringify({ schema: 1, settings: oldSettings, session: original.session }));
-    expect(saved.schema).toBe(3);
+    expect(saved.schema).toBe(4);
     expect(saved.session).toEqual(original.session);
     expect(saved.settings.timeoutLimit).toBe(1);
     expect(saved.timeouts.used).toEqual({ A: 0, B: 0 });

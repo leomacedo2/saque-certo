@@ -1,8 +1,9 @@
 import { DEFAULT_SETTINGS, Match, Session, Settings, other } from '../domain/match';
 import { canRequestTimeout, DEFAULT_TIMEOUT_CONFIG, newTimeouts, timeoutPlayers, Timeouts } from '../domain/timeouts';
 import { DEFAULT_PLAYER_COLORS, validPlayerColors } from '../domain/colors';
+import { inferPreparation, Preparation } from '../domain/game';
 
-export interface SavedGame { schema: 3; settings: Settings; session: Session; timeouts: Timeouts }
+export interface SavedGame extends Preparation { schema: 4; settings: Settings; session: Session; timeouts: Timeouts }
 const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 const integer = (value: unknown, min = 0, max = 1_000_000): value is number =>
@@ -77,19 +78,36 @@ function validMatch(value: unknown): value is Match {
   }
   return true;
 }
-export function encodeGame(settings: Settings, session: Session, timeouts: Timeouts = newTimeouts(settings)): string {
-  return JSON.stringify({ schema: 3, settings, session, timeouts } satisfies SavedGame);
+export function encodeGame(settings: Settings, session: Session, timeouts: Timeouts = newTimeouts(settings), preparation: Preparation = inferPreparation(session)): string {
+  return JSON.stringify({ schema: 4, settings, session, timeouts, phase: preparation.phase, warmup: preparation.warmup } satisfies SavedGame);
 }
+function validPreparation(value: Record<string, unknown>, session: Session, timeouts: Timeouts): value is Record<string, unknown> & Preparation {
+  const match = session.current;
+  const expected = inferPreparation(session).phase;
+  if (value.phase === 'warmupPrompt' || value.phase === 'warmup') {
+    if (!match.firstServer || match.winner || match.pending || match.completed.length || match.points.A || match.points.B
+      || timeoutBusy(timeouts)) return false;
+  } else if (value.phase !== expected) return false;
+  if (value.phase !== 'warmup') return value.warmup === null;
+  const warmup = value.warmup;
+  return record(warmup) && integer(warmup.seconds, 10, 3600) && record(warmup.timer)
+    && integer(warmup.timer.remainingMs, 0, warmup.seconds * 1000)
+    && (warmup.timer.deadline === null || integer(warmup.timer.deadline, 0, Number.MAX_SAFE_INTEGER));
+}
+const timeoutBusy = (timeouts: Timeouts) => !!(timeouts.active || timeouts.request || timeouts.correction);
 export function decodeGame(raw: string): SavedGame {
   const data: unknown = JSON.parse(raw);
-  if (!record(data) || ![1, 2, 3].includes(data.schema as number) || !record(data.settings)) throw new Error('Arquivo de partida inválido ou incompatível.');
+  if (!record(data) || ![1, 2, 3, 4].includes(data.schema as number) || !record(data.settings)) throw new Error('Arquivo de partida inválido ou incompatível.');
   // Old saves predate timeouts: keep the match/history and grant the default rights.
   const legacySettings = data.schema === 1 ? { ...DEFAULT_TIMEOUT_CONFIG, ...data.settings } : data.settings;
-  const settings = data.schema === 3 ? legacySettings : { colors: DEFAULT_PLAYER_COLORS, ...legacySettings };
+  const settings = (data.schema as number) >= 3 ? legacySettings : { colors: DEFAULT_PLAYER_COLORS, ...legacySettings };
   if (!validSettings(settings) || !record(data.session)
     || !validMatch(data.session.current) || !Array.isArray(data.session.history)
     || !data.session.history.every(validMatch)) throw new Error('Arquivo de partida inválido ou incompatível.');
   const timeouts = data.schema === 1 ? newTimeouts(settings) : data.timeouts;
   if (!validTimeouts(timeouts, data.session.current)) throw new Error('Estado de tempo técnico inválido.');
-  return { schema: 3, settings, session: data.session as unknown as Session, timeouts };
+  const session = data.session as unknown as Session;
+  if (data.schema === 4 && !validPreparation(data, session, timeouts)) throw new Error('Fase de preparação inválida.');
+  const preparation = data.schema === 4 ? { phase: data.phase, warmup: data.warmup } as Preparation : inferPreparation(session);
+  return { schema: 4, settings, session, timeouts, ...preparation };
 }

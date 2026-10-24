@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Action, DEFAULT_SETTINGS, Settings } from '../domain/match';
-import { newGame, reduceGame } from '../domain/game';
+import { newGame, PreparationAction, reduceGame } from '../domain/game';
 import { TimeoutAction } from '../domain/timeouts';
 import { SavedGame, decodeGame, encodeGame } from '../storage/codec';
 import { createWriteQueue } from '../storage/persistence';
@@ -16,7 +16,7 @@ export function useGame() {
   const [error, setError] = useState<string | null>(null);
   const [saveTick, setSaveTick] = useState(0);
   const [persisted, setPersisted] = useState<string | null>(null);
-  const snapshot = useMemo(() => encodeGame(settings, game.session, game.timeouts), [settings, game]);
+  const snapshot = useMemo(() => encodeGame(settings, game.session, game.timeouts, game), [settings, game]);
   const revision = useRef(0);
   const load = useCallback(() => {
     return AsyncStorage.getItem(KEY).then(raw => {
@@ -42,7 +42,8 @@ export function useGame() {
     });
   }, [snapshot, status, saveTick]);
   return {
-    session: game.session, timeouts: game.timeouts, settings, status, saved, error, saving: status === 'ready' && persisted !== snapshot && !error,
+    session: game.session, timeouts: game.timeouts, phase: game.phase, warmup: game.warmup, settings, status, saved, error, saving: status === 'ready' && persisted !== snapshot && !error,
+    dispatchPreparation: (action: PreparationAction) => setGame(current => reduceGame(current, { kind: 'preparation', action })),
     dispatch: (action: Action) => setGame(current => reduceGame(current, { kind: 'match', action })),
     dispatchTimeout: (action: TimeoutAction) => setGame(current => reduceGame(current, { kind: 'timeout', action })),
     setSettings,
@@ -51,7 +52,7 @@ export function useGame() {
     retrySave: () => setSaveTick(tick => tick + 1),
     resume: () => {
       if (!saved) return;
-      setGame({ session: saved.session, timeouts: saved.timeouts }); setSettings(saved.settings); setStatus('ready');
+      setGame({ session: saved.session, timeouts: saved.timeouts, phase: saved.phase, warmup: saved.warmup }); setSettings(saved.settings); setStatus('ready');
     },
     discard: () => {
       const preferences = saved?.settings ?? settings;

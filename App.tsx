@@ -10,6 +10,7 @@ import { timeoutBlocksPlay } from './src/domain/timeouts';
 import { useGame } from './src/hooks/useGame';
 import { Button, Dialog, shared } from './src/ui/Controls';
 import { Scoreboard } from './src/ui/Scoreboard';
+import { MatchSummary } from './src/ui/MatchSummary';
 import { SettingsPanel } from './src/ui/SettingsPanel';
 import { Warmup } from './src/ui/Warmup';
 import { CountdownScreen } from './src/ui/CountdownScreen';
@@ -33,12 +34,15 @@ function Game() {
   const ready = game.status === 'ready';
   const timeoutBusy = timeoutBlocksPlay(game.timeouts);
   const activeTimeout = game.timeouts.active;
-  const blocked = !ready || menu || warmup || newMatchPrompt || timeoutBusy || !!colorPlayer;
+  const preparing = game.phase === 'warmupPrompt' || game.phase === 'warmup';
+  const preMatch = game.phase === 'awaitingInitialServer';
+  const blocked = !ready || menu || warmup || preparing || newMatchPrompt || timeoutBusy || !!colorPlayer;
   useEffect(() => {
     // The full-screen timer owns Back, including its alarm exit confirmation.
-    if (warmup || (ready && activeTimeout)) return;
+    if (warmup || (ready && (activeTimeout || game.phase === 'warmup'))) return;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       if (colorPlayer) { setColorPlayer(null); return true; }
+      if (game.phase === 'warmupPrompt') { game.dispatchPreparation({ type: 'cancelInitialServer' }); return true; }
       if (menu) { setMenu(false); return true; }
       if (newMatchPrompt) { setNewMatchPrompt(false); return true; }
       if (game.timeouts.request) { game.dispatchTimeout({ type: 'cancelRequest' }); return true; }
@@ -55,11 +59,19 @@ function Game() {
     const now = Date.now();
     if (game.settings.doubleTapGuard && now - lastTap.current < 250) return;
     lastTap.current = now;
-    game.dispatch({ type: match.firstServer ? 'point' : 'selectServer', player });
+    game.dispatch({ type: preMatch ? 'selectServer' : 'point', player });
     if (game.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
   };
   const confirmNew = () => { setMenu(false); setNewMatchPrompt(true); };
   const lastSet = match.completed.at(-1);
+  if (game.phase === 'warmup' && game.warmup && ready) return <SafeAreaView style={styles.warmupSafe}>
+    <StatusBar hidden />
+    {game.error && <Pressable accessibilityRole="button" onPress={game.retrySave} style={styles.saveError}><Text style={styles.saveErrorText}>{game.error} · Tentar salvar</Text></Pressable>}
+    <CountdownScreen timer={game.warmup.timer} initialSeconds={game.warmup.seconds}
+      onToggle={now => game.dispatchPreparation({ type: 'toggleWarmup', now })}
+      onRestart={() => game.dispatchPreparation({ type: 'restartWarmup' })}
+      onClose={() => game.dispatchPreparation({ type: 'closeWarmup' })} />
+  </SafeAreaView>;
   if (activeTimeout && ready) return <SafeAreaView style={styles.warmupSafe}>
     <StatusBar hidden />
     {game.error && <Pressable accessibilityRole="button" onPress={game.retrySave} style={styles.saveError}><Text style={styles.saveErrorText}>{game.error} · Tentar salvar</Text></Pressable>}
@@ -80,12 +92,20 @@ function Game() {
   </SafeAreaView>;
   return <SafeAreaView style={styles.safe}>
     <StatusBar hidden />
-    <MatchHeader match={match} timeouts={game.timeouts} colors={playerColors} disabled={blocked} onColor={setColorPlayer} dispatch={game.dispatchTimeout}
-      leading={<Button label={menu ? '☰ Fechar' : '☰ Menu'} secondary disabled={!ready || newMatchPrompt || timeoutBusy || !!colorPlayer} onPress={() => setMenu(value => !value)} />}
+    <MatchHeader match={match} preMatch={preMatch} timeouts={game.timeouts} colors={playerColors} disabled={blocked} onColor={setColorPlayer} dispatch={game.dispatchTimeout}
+      leading={<Button label={menu ? '☰ Fechar' : '☰ Menu'} secondary disabled={!ready || preparing || newMatchPrompt || timeoutBusy || !!colorPlayer} onPress={() => setMenu(value => !value)} />}
       trailing={<Button label="↶ Desfazer" secondary disabled={!ready || !game.session.history.length || menu || newMatchPrompt || warmup || timeoutBusy || !!colorPlayer} onPress={() => { game.dispatch({ type: 'undo' }); lastTap.current = -Infinity; }} />} />
     {game.error && ready && <Pressable accessibilityRole="button" onPress={game.retrySave} style={styles.saveError}><Text style={styles.saveErrorText}>{game.error} · Tentar salvar</Text></Pressable>}
     <View style={styles.body}>
-      <Scoreboard match={match} colors={playerColors} highContrast={game.settings.highContrast} blocked={blocked} onPlayer={touchPlayer} />
+      <Scoreboard match={match} preMatch={preMatch} colors={playerColors} highContrast={game.settings.highContrast} blocked={blocked} onPlayer={touchPlayer} />
+      {ready && game.phase === 'warmupPrompt' && <Dialog title="Deseja iniciar o aquecimento?">
+        <Text style={[shared.strong, { color: playerColors[match.firstServer!] }]}>Sacador inicial: {playerName(match.firstServer!)}</Text>
+        <View style={shared.actions}>
+          <Button label="Sim, iniciar aquecimento" onPress={() => game.dispatchPreparation({ type: 'acceptWarmup', seconds: game.settings.warmupSeconds })} />
+          <Button label="Não, ir para partida" secondary onPress={() => game.dispatchPreparation({ type: 'skipWarmup' })} />
+          <Button label="Corrigir sacador inicial" secondary onPress={() => { game.dispatchPreparation({ type: 'cancelInitialServer' }); lastTap.current = -Infinity; }} />
+        </View>
+      </Dialog>}
       {game.status === 'loading' && <Dialog title="Abrindo o Saque Certo"><ActivityIndicator color={palette.green} /><Text style={shared.body}>Conferindo a partida salva…</Text></Dialog>}
       {(game.status === 'recover' || game.status === 'error') && <Dialog eyebrow="RECUPERAÇÃO" title={game.status === 'recover' ? 'Retomar a partida?' : 'Falha ao abrir a partida'}>
         <Text style={shared.body}>{game.status === 'recover' ? 'Pontos, sets, posições, saques, tempos técnicos e histórico de desfazer foram preservados.' : game.error}</Text>
@@ -100,8 +120,8 @@ function Game() {
         <View style={shared.actions}><Button label="CONFIRMAR TROCA" onPress={() => { game.dispatch({ type: 'confirmSwitch' }); lastTap.current = Date.now(); }} />{match.pending === 'manual' && <Button label="Cancelar" secondary onPress={() => game.dispatch({ type: 'cancelManual' })} />}</View>
       </Dialog>}
       {ready && !warmup && match.winner && !newMatchPrompt && <Dialog eyebrow="PARTIDA ENCERRADA" title={`${playerName(match.winner)} venceu!`}>
-        <Text style={shared.strong}>Sets · A {match.sets.A} × {match.sets.B} B</Text>
-        <Text style={shared.body}>{match.completed.map((set, index) => `Set ${index + 1}: ${set.points.A} × ${set.points.B}`).join('   ·   ')}</Text>
+        <Text style={shared.strong}>Resultado: {match.sets.A} × {match.sets.B} em sets</Text>
+        <MatchSummary match={match} colors={playerColors} />
         <Text style={shared.body}>Pontuação bloqueada. Use Desfazer para corrigir o último ponto.</Text>
         <View style={shared.actions}><Button label="Nova partida" onPress={confirmNew} /></View>
       </Dialog>}

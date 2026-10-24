@@ -1,4 +1,4 @@
-# Saque Certo · v1.2.0
+# Saque Certo · v1.3.0
 
 Assistente de arbitragem para partidas **individuais de tênis de mesa**, feito com React Native, Expo e TypeScript. Ajuda o árbitro a identificar o próximo sacador e a confirmar as trocas de lado, principalmente aos cinco pontos do set decisivo. Complementa o placar físico.
 
@@ -17,7 +17,9 @@ No Expo Go compatível com SDK 57, leia o QR Code mostrado pelo Expo, com celula
 
 - Interface minimalista em paisagem, com duas áreas grandes para marcar pontos e indicadores numéricos de sets no centro do cabeçalho.
 - Jogador A azul e jogador B laranja por padrão; oito cores disponíveis, com bloqueio de combinações iguais ou muito próximas. Cores, sets e tempos acompanham os jogadores após trocar de lado.
-- Primeiro toque escolhe o sacador sem marcar ponto.
+- Pré-partida com nomes grandes; primeiro toque escolhe o sacador sem marcar ponto e oferece aquecimento opcional.
+- Correção do sacador pela pergunta ou por Desfazer antes dos pontos; preparação e aquecimento inicial recuperáveis ao reabrir.
+- Resultado final em tabela por set, com colunas fixas de A/B, cores dos jogadores, total e rolagem.
 - Saque a cada dois pontos e a cada ponto após 10 × 10 no formato padrão.
 - Set com diferença mínima de dois; set único e melhor de 3, 5 ou 7.
 - Confirmação obrigatória de troca entre sets e aos cinco do último set possível.
@@ -35,7 +37,9 @@ No Expo Go compatível com SDK 57, leia o QR Code mostrado pelo Expo, com celula
 
 Capturas reais da versão web em janela horizontal de 844 × 390. Não são capturas de um aparelho Android.
 
-![Cores no pré-jogo e sets no cabeçalho](docs/screenshots/pre-partida-v1-2-0.png)
+![Seleção inicial com nomes grandes](docs/screenshots/pre-partida-v1-3-0.png)
+
+![Resultados por set com identidade fixa](docs/screenshots/sumula-v1-3-0.png)
 
 ![Cores e tempos acompanham os jogadores após a troca de lados](docs/screenshots/placar-v1-2-0.png)
 
@@ -83,7 +87,7 @@ No celular, confira principalmente a troca aos cinco pontos do set decisivo, o p
 
 ## Cores e cabeçalho
 
-Antes de escolher o primeiro sacador, use **Cor A** e **Cor B**. A seleção é salva imediatamente. Escolher o sacador mantém 0 × 0 e substitui esses controles por **Tempo A/B**; novos sets não voltam ao pré-jogo. Os sets ficam apenas no topo, entre os controles. Os pontos permanecem brancos.
+Antes de escolher o primeiro sacador, use **Cor A** e **Cor B**. A seleção é salva imediatamente. Escolher o sacador mantém 0 × 0 e abre **Deseja iniciar o aquecimento?**. **Sim, iniciar aquecimento** abre o contador configurado parado, aguardando Iniciar; **Não, ir para partida** libera o placar com Tempo A/B. Para corrigir, use **Corrigir sacador inicial** na pergunta ou Desfazer antes dos pontos. Saia do aquecimento antes de corrigir. Novos sets não voltam ao pré-jogo. Os sets ficam apenas no topo, entre os controles. Os pontos permanecem brancos.
 
 Durante a partida, as cores podem ser alteradas pelo Menu, sem mudar pontos, saque ou tempos. Não há gesto de toque longo. **Restaurar tempo técnico** aparece uma única vez: primeiro no menu durante uma partida em andamento com uso corrigível; nos demais casos, na seção Tempo Técnico. Dados antigos são migrados com as cores padrão.
 
@@ -101,6 +105,12 @@ Os pedidos pendentes, os usos, as correções pendentes e o cronômetro são sal
 
 Para testar rapidamente, configure três segundos e dois tempos, salve e inicie nova partida. Faça um pedido conjunto: ambos devem ficar com um tempo, com um único contador parado em 00:03. Inicie, aguarde zero, encerre e confira pontos e saque. Teste também cancelar antes de iniciar, corrigir pelo menu, trocar de lados e fechar/reabrir com um intervalo pausado.
 
+## Preparação e resultado final
+
+A pergunta, a escolha do sacador e o aquecimento inicial (parado, em andamento ou pausado) ficam salvos. Ao retomar, o contador em andamento considera o tempo transcorrido; se tiver vencido, aguarda a intervenção do árbitro. Voltar à partida libera o placar sem alterar o sacador. O aquecimento avulso pelo menu mantém seu funcionamento anterior.
+
+Ao encerrar, consulte a tabela cronológica para transcrever a súmula física: Jogador A e Jogador B mantêm suas colunas após qualquer troca de lado. A cor destaca o vencedor de cada set; a última linha mostra os sets vencidos. Role o modal para consultar todas as linhas e Nova partida. Desfazer continua corrigindo o último ponto e atualizando os resultados.
+
 ## Regras e decisões
 
 Referência: [ITTF Statutes 2026, capítulo 2](https://db.ittf.com/sites/default/files/public/2026-02/2026_Statutes_v1_consolidated_clean.pdf), itens 2.11, 2.12 e 2.13. A escolha de quem saca primeiro é feita pelo árbitro após o sorteio; o aplicativo apenas registra o resultado.
@@ -117,7 +127,7 @@ Nos formatos casuais, o empate que inicia os saques de um ponto é **alvo − 1*
 - Expo Go é o ambiente de teste. Um aplicativo Android instalado e independente exige compilação nativa; nenhum APK foi gerado nesta entrega.
 - A partida funciona sem chamadas de rede após carregar. Reabrir um projeto de desenvolvimento no Expo Go pode exigir o servidor do computador; para lançamento offline independente, use uma compilação nativa.
 - Apenas uma partida e seu histórico ficam armazenados; nova partida substitui a anterior após confirmação. Limpar os dados ou desinstalar o app remove esse armazenamento.
-- O cronômetro não é recuperado após sair da tela de aquecimento ou fechar o app. A partida permanece intacta. O alarme respeita volume, modo silencioso, saída de áudio e restrições do aparelho; o app não altera o volume global. Não há garantia de reprodução em segundo plano, com a tela bloqueada ou com o app encerrado. Mantenha o app em primeiro plano durante o aquecimento.
+- O aquecimento inicial é recuperado ao reabrir; sair dele encerra esse aquecimento. O aquecimento avulso pelo menu não é recuperado após sair da tela ou fechar o app. A partida permanece intacta. O alarme respeita volume, modo silencioso, saída de áudio e restrições do aparelho; o app não altera o volume global. Não há garantia de reprodução em segundo plano, com a tela bloqueada ou com o app encerrado. Mantenha o app em primeiro plano durante o aquecimento.
 - O histórico usa snapshots completos; partidas excepcionalmente longas aumentam o armazenamento.
 - Dependências transitivas de desenvolvimento têm alertas conhecidos; consulte `npm audit` para verificar o estado atual.
 - Fora do escopo: duplas, sistema de aceleração, placares eletrônicos, ranking, torneios, contas e sincronização online.
