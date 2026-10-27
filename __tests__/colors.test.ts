@@ -56,7 +56,7 @@ test.each([1, 2])('migra save schema %i para cores padrão sem perda de estado',
   const { colors: _colors, ...settings } = DEFAULT_SETTINGS;
   const data = { schema, settings, session: game.session, timeouts: game.timeouts };
   const loaded = decodeGame(JSON.stringify(data));
-  expect(loaded.schema).toBe(4);
+  expect(loaded.schema).toBe(5);
   expect(loaded.settings.colors).toEqual(DEFAULT_PLAYER_COLORS);
   expect(loaded.session).toEqual(game.session);
   expect(loaded.timeouts).toEqual(game.timeouts);

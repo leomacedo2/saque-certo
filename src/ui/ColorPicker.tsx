@@ -1,16 +1,16 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { ColorId, distinctColors, PLAYER_PALETTE, PlayerColors } from '../domain/colors';
-import { other, PlayerId, playerName } from '../domain/match';
+import { ColorId, ColorIdentity, distinctColors, PLAYER_PALETTE } from '../domain/colors';
 import { Button, Dialog, shared } from './Controls';
 
 export function ColorPicker({ player, colors, onSelect, onClose }: {
-  player: PlayerId; colors: PlayerColors; onSelect: (color: ColorId) => void; onClose: () => void;
+  player: ColorIdentity; colors: Record<string, ColorId>; onSelect: (color: ColorId) => void; onClose: () => void;
 }) {
-  return <Dialog title={`Cor do ${playerName(player)}`}>
-    <Text style={shared.body}>Cores iguais ou muito próximas à do adversário ficam indisponíveis.</Text>
+  return <Dialog title={player === 'A' || player === 'B' ? `Cor do Jogador ${player}` : `Cor do atleta ${player}`}>
+    <Text style={shared.body}>Cores iguais ou muito próximas às outras identidades ficam indisponíveis.</Text>
     <View style={styles.options}>{(Object.keys(PLAYER_PALETTE) as ColorId[]).map(id => {
       const option = PLAYER_PALETTE[id];
-      const disabled = !distinctColors(id, colors[other(player)]);
+      const disabled = Object.entries(colors).some(([identity, color]) => identity !== player
+        && !distinctColors(id, color, Object.keys(colors).length === 4 && !(['A1', 'B1'].includes(player) && ['A1', 'B1'].includes(identity)) ? 60 : 90));
       return <Pressable key={id} accessibilityRole="radio" accessibilityLabel={option.name}
         accessibilityState={{ checked: colors[player] === id, disabled }} disabled={disabled}
         onPress={() => onSelect(id)} style={[styles.option, { borderColor: option.hex, backgroundColor: colors[player] === id ? `${option.hex}25` : 'transparent', opacity: disabled ? 0.3 : 1 }]}>

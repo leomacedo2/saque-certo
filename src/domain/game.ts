@@ -2,7 +2,7 @@ import { Action, DEFAULT_SETTINGS, newSession, reduceSession, Session, Settings 
 import { newTimeouts, reduceTimeouts, TimeoutAction, timeoutBlocksPlay, Timeouts } from './timeouts';
 import { createTimer, pauseTimer, startTimer, TimerState } from './timer';
 
-export type GamePhase = 'awaitingInitialServer' | 'warmupPrompt' | 'warmup' | 'playing' | 'finished';
+export type GamePhase = 'awaitingInitialServer' | 'awaitingAthleteServer' | 'awaitingAthleteReceiver' | 'setOrderPrompt' | 'warmupPrompt' | 'warmup' | 'playing' | 'finished';
 export interface Preparation { phase: GamePhase; warmup: { seconds: number; timer: TimerState } | null }
 export interface GameState extends Preparation { session: Session; timeouts: Timeouts }
 export type PreparationAction = { type: 'acceptWarmup'; seconds: number } | { type: 'skipWarmup' } | { type: 'closeWarmup' }
@@ -10,7 +10,12 @@ export type PreparationAction = { type: 'acceptWarmup'; seconds: number } | { ty
 export type GameAction = { kind: 'match'; action: Action } | { kind: 'timeout'; action: TimeoutAction }
   | { kind: 'preparation'; action: PreparationAction };
 export function inferPreparation(session: Session): Preparation {
-  return { phase: session.current.winner ? 'finished' : session.current.firstServer ? 'playing' : 'awaitingInitialServer', warmup: null };
+  const match = session.current;
+  const phase: GamePhase = match.winner ? 'finished' : !match.firstServer ? 'awaitingInitialServer'
+    : match.doubles && !match.doubles.server ? 'awaitingAthleteServer'
+      : match.doubles && !match.doubles.receiver ? 'awaitingAthleteReceiver'
+        : match.doubles && !match.doubles.confirmed ? 'setOrderPrompt' : 'playing';
+  return { phase, warmup: null };
 }
 export function newGame(settings: Settings = DEFAULT_SETTINGS): GameState {
   return { session: newSession(settings), timeouts: newTimeouts(settings), phase: 'awaitingInitialServer', warmup: null };
@@ -41,10 +46,12 @@ export function reduceGame(game: GameState, action: GameAction): GameState {
   if (action.kind === 'match') {
     if (timeoutBlocksPlay(game.timeouts) || game.phase === 'warmup') return game;
     if (game.phase === 'warmupPrompt' && action.action.type !== 'undo') return game;
-    if (game.phase === 'awaitingInitialServer' && action.action.type === 'point') return game;
+    if (action.action.type === 'point' && game.phase !== 'playing') return game;
+    if (action.action.type === 'requestManual' && game.phase !== 'playing' && game.phase !== 'awaitingInitialServer') return game;
     const session = reduceSession(game.session, action.action);
     if (session === game.session) return game;
-    const preparation = action.action.type === 'selectServer' ? { phase: 'warmupPrompt' as const, warmup: null } : inferPreparation(session);
+    const needsWarmup = action.action.type === 'selectAthleteReceiver' || (action.action.type === 'selectServer' && !session.current.doubles);
+    const preparation = needsWarmup ? { phase: 'warmupPrompt' as const, warmup: null } : inferPreparation(session);
     return { ...game, session, ...preparation };
   }
   if (game.phase !== 'playing' && game.phase !== 'finished') return game;

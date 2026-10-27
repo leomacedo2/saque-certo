@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Action, DEFAULT_SETTINGS, Settings } from '../domain/match';
 import { newGame, PreparationAction, reduceGame } from '../domain/game';
 import { TimeoutAction } from '../domain/timeouts';
+import { Mode } from '../domain/doubles';
 import { SavedGame, decodeGame, encodeGame } from '../storage/codec';
 import { createWriteQueue } from '../storage/persistence';
 
@@ -47,15 +48,16 @@ export function useGame() {
     dispatch: (action: Action) => setGame(current => reduceGame(current, { kind: 'match', action })),
     dispatchTimeout: (action: TimeoutAction) => setGame(current => reduceGame(current, { kind: 'timeout', action })),
     setSettings,
-    restart: () => setGame(newGame(settings)),
+    restart: (mode: Mode = settings.mode) => { const preferences = { ...settings, mode }; setSettings(preferences); setGame(newGame(preferences)); },
     retryLoad: () => { setStatus('loading'); setError(null); return load(); },
     retrySave: () => setSaveTick(tick => tick + 1),
     resume: () => {
       if (!saved) return;
       setGame({ session: saved.session, timeouts: saved.timeouts, phase: saved.phase, warmup: saved.warmup }); setSettings(saved.settings); setStatus('ready');
     },
-    discard: () => {
-      const preferences = saved?.settings ?? settings;
+    discard: (mode?: Mode) => {
+      const prior = saved?.settings ?? settings;
+      const preferences = { ...prior, mode: mode ?? prior.mode };
       setSettings(preferences); setGame(newGame(preferences));
       setSaved(null); setError(null); setStatus('ready');
     },

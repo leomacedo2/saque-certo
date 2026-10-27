@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Match, playerName } from '../domain/match';
+import { Match } from '../domain/match';
+import { teamName } from '../domain/doubles';
 import { canRequestTimeout, TimeoutAction, timeoutRemaining, Timeouts } from '../domain/timeouts';
 import { Button, Dialog, shared } from './Controls';
 
@@ -19,15 +20,17 @@ export function TimeoutPlayerButton({ player, color, match, timeouts, disabled, 
 export function TimeoutDialogs({ match, timeouts, dispatch }: {
   match: Match; timeouts: Timeouts; dispatch: (action: TimeoutAction) => void;
 }) {
+  const playerName = (player: 'A' | 'B') => teamName(match, player);
+  const bothLabel = match.mode === 'doubles' ? 'Ambas as duplas' : 'Ambos os jogadores';
   if (timeouts.request) {
     const who = timeouts.request;
-    return <Dialog eyebrow="TEMPO TÉCNICO" title={`Solicitar tempo técnico para ${who === 'both' ? 'ambos os jogadores' : playerName(who)}?`}>
+    return <Dialog eyebrow="TEMPO TÉCNICO" title={`Solicitar tempo técnico para ${who === 'both' ? bothLabel.toLowerCase() : playerName(who)}?`}>
       <Text style={shared.body}>Duração: {timeouts.config.timeoutSeconds} segundos. O cronômetro abrirá parado.</Text>
       <Text style={shared.strong}>{who === 'both'
         ? `Após confirmar: A ${timeoutRemaining(timeouts, 'A') - 1} · B ${timeoutRemaining(timeouts, 'B') - 1} disponíveis.`
         : `Após confirmar: ${timeoutRemaining(timeouts, who) - 1} ${timeoutRemaining(timeouts, who) - 1 === 1 ? 'tempo disponível' : 'tempos disponíveis'} para ${playerName(who)}.`}</Text>
       <View style={shared.actions}>
-        <Button label="Ambos os jogadores" secondary disabled={who === 'both' || !canRequestTimeout(timeouts, match, 'both')} onPress={() => dispatch({ type: 'request', who: 'both' })} />
+        <Button label={bothLabel} secondary disabled={who === 'both' || !canRequestTimeout(timeouts, match, 'both')} onPress={() => dispatch({ type: 'request', who: 'both' })} />
         <Button label="Confirmar tempo técnico" onPress={() => dispatch({ type: 'confirmRequest' })} />
         <Button label="Cancelar" secondary onPress={() => dispatch({ type: 'cancelRequest' })} />
       </View>

@@ -30,7 +30,7 @@ export function newTimeouts(config: TimeoutConfig = DEFAULT_TIMEOUT_CONFIG): Tim
   return { config: timeoutConfigFrom(config), used: { A: 0, B: 0 }, request: null, active: null, correction: null };
 }
 export function canRequestTimeout(state: Timeouts, match: Match, who: TimeoutWho): boolean {
-  return !!match.firstServer && !match.pending && !match.winner && !state.active && !state.correction
+  return !!match.firstServer && (!match.doubles || match.doubles.confirmed) && !match.pending && !match.winner && !state.active && !state.correction
     && timeoutPlayers(who).every(player => timeoutRemaining(state, player) > 0);
 }
 export function reduceTimeouts(state: Timeouts, action: TimeoutAction, match: Match): Timeouts {

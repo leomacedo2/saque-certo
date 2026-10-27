@@ -2,32 +2,38 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Match, Pair, PlayerId, nextServer, other, playerName } from '../domain/match';
 import { palette } from './theme';
 import { LargeNumber } from './LargeNumber';
+import { athletesOf, doublesService, teamName } from '../domain/doubles';
+import { AthleteColors } from '../domain/colors';
+import { DoublesAthlete } from './DoublesPanel';
 
-export function Scoreboard({ match, colors, highContrast, blocked, preMatch, onPlayer }: {
+export function Scoreboard({ match, colors, athleteColors, highContrast, blocked, preMatch, onPlayer }: {
   match: Match; colors: Pair<string>; highContrast: boolean; blocked: boolean; preMatch: boolean; onPlayer: (player: PlayerId) => void;
+  athleteColors: AthleteColors;
 }) {
   const server = nextServer(match);
   const players = [match.left, other(match.left)];
   return <View style={styles.container}>
-    {preMatch && <View style={styles.caption}>
-      <Text style={styles.captionText}>Quem começa sacando? Toque no lado do jogador.</Text>
+    {preMatch && !match.firstServer && <View style={styles.caption}>
+      <Text style={styles.captionText}>{match.mode === 'doubles' ? 'Qual dupla começa sacando? Toque no lado da dupla.' : 'Quem começa sacando? Toque no lado do jogador.'}</Text>
     </View>}
     <View style={styles.court}>
       {players.map((id, index) => {
         const serving = server === id;
         const color = colors[id];
         return <Pressable key={id} onPress={() => onPlayer(id)} disabled={blocked || !!match.pending || !!match.winner}
-          accessibilityRole="button" accessibilityLabel={`${playerName(id)}, ${index === 0 ? 'esquerda' : 'direita'}, ${match.points[id]} pontos, ${match.sets[id]} ${match.sets[id] === 1 ? 'set' : 'sets'}${serving ? ', saque' : ''}. ${match.firstServer ? 'Adicionar ponto' : 'Selecionar primeiro sacador'}`}
+          accessibilityRole="button" accessibilityLabel={`${teamName(match, id)}, ${index === 0 ? 'esquerda' : 'direita'}, ${match.points[id]} pontos, ${match.sets[id]} ${match.sets[id] === 1 ? 'set' : 'sets'}${serving ? ', saque' : ''}. ${match.firstServer ? 'Adicionar ponto' : 'Selecionar primeiro sacador'}`}
           style={({ pressed }) => [styles.player, { borderColor: serving || highContrast ? color : `${color}80`,
             backgroundColor: serving ? `${color}20` : palette.surface }, pressed && { opacity: 0.8 }]}>
-          {!preMatch && <View style={styles.playerHeader}>
+          {!preMatch && match.mode === 'singles' && <View style={styles.playerHeader}>
             <View style={styles.nameGroup}><View style={[styles.dot, { backgroundColor: color }]} /><Text style={[styles.name, { color }]}>{playerName(id)}</Text></View>
             <View style={[styles.badge, serving && { backgroundColor: color }]}>
               <Text style={[styles.badgeText, { color: serving ? '#111A24' : palette.muted }]}>{serving ? '● SAQUE' : match.firstServer ? 'RECEBE' : 'ESCOLHER'}</Text>
             </View>
           </View>}
-          {preMatch ? <View pointerEvents="none" style={styles.initialNameArea}><Text style={[styles.initialName, { color }]}>{playerName(id)}</Text></View>
+          {!preMatch && match.mode === 'doubles' && <DoublesAthlete athlete={athletesOf(id)[0]!} colors={athleteColors} service={doublesService(match)} />}
+          {preMatch ? <View pointerEvents="none" style={styles.initialNameArea}><Text style={[styles.initialName, { color }]}>{teamName(match, id)}</Text></View>
             : <LargeNumber value={String(match.points[id])} color={highContrast ? '#FFFFFF' : palette.text} />}
+          {!preMatch && match.mode === 'doubles' && <DoublesAthlete athlete={athletesOf(id)[1]!} colors={athleteColors} service={doublesService(match)} />}
         </Pressable>;
       })}
     </View>

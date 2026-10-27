@@ -1,16 +1,17 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Match, Pair } from '../domain/match';
 import { palette } from './theme';
+import { teamName } from '../domain/doubles';
 
 /** Columns use player identities, never the current physical ends. */
 export function MatchSummary({ match, colors }: { match: Match; colors: Pair<string> }) {
   return <View accessibilityLabel="Resultados por set" style={styles.table}>
     <View style={[styles.row, styles.heading]}>
       <Text style={[styles.label, styles.headerText]}>Set</Text>
-      <Text style={[styles.cell, styles.headerText, { color: colors.A }]}>Jogador A</Text>
-      <Text style={[styles.cell, styles.headerText, { color: colors.B }]}>Jogador B</Text>
+      <Text style={[styles.cell, styles.headerText, { color: colors.A }]}>{teamName(match, 'A')}</Text>
+      <Text style={[styles.cell, styles.headerText, { color: colors.B }]}>{teamName(match, 'B')}</Text>
     </View>
-    {match.completed.map((set, index) => <View key={index} style={styles.row} accessibilityLabel={`Set ${index + 1}: Jogador A ${set.points.A}, Jogador B ${set.points.B}. Vencedor: Jogador ${set.winner}`}>
+    {match.completed.map((set, index) => <View key={index} style={styles.row} accessibilityLabel={`Set ${index + 1}: ${teamName(match, 'A')} ${set.points.A}, ${teamName(match, 'B')} ${set.points.B}. Vencedor: ${teamName(match, set.winner)}`}>
       <Text style={styles.label}>{index + 1}</Text>
       {(['A', 'B'] as const).map(player => <Text key={player} style={[styles.cell, set.winner === player && { color: colors[player], fontWeight: '800', backgroundColor: `${colors[player]}12` }]}>{set.points[player]}</Text>)}
     </View>)}

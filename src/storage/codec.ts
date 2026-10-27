@@ -1,9 +1,10 @@
 import { DEFAULT_SETTINGS, Match, Session, Settings, other } from '../domain/match';
 import { canRequestTimeout, DEFAULT_TIMEOUT_CONFIG, newTimeouts, timeoutPlayers, Timeouts } from '../domain/timeouts';
-import { DEFAULT_PLAYER_COLORS, validPlayerColors } from '../domain/colors';
+import { DEFAULT_ATHLETE_COLORS, DEFAULT_PLAYER_COLORS, validAthleteColors, validPlayerColors } from '../domain/colors';
 import { inferPreparation, Preparation } from '../domain/game';
+import { advanceOrder, isAthlete, partner, receiverForNextSet, ServiceOrder, teamOf } from '../domain/doubles';
 
-export interface SavedGame extends Preparation { schema: 4; settings: Settings; session: Session; timeouts: Timeouts }
+export interface SavedGame extends Preparation { schema: 5; settings: Settings; session: Session; timeouts: Timeouts }
 const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 const integer = (value: unknown, min = 0, max = 1_000_000): value is number =>
@@ -17,7 +18,8 @@ export function validSettings(value: unknown): value is Settings {
     && [1, 3, 5, 7].includes(value.bestOf as number)
     && ['decidingSwitch', 'haptics', 'doubleTapGuard', 'highContrast', 'sound'].every(key => typeof value[key] === 'boolean')
     && integer(value.warmupSeconds, 10, 3600)
-    && validTimeoutConfig(value) && validPlayerColors(value.colors);
+    && validTimeoutConfig(value) && validPlayerColors(value.colors) && validAthleteColors(value.athleteColors)
+    && ['singles', 'doubles'].includes(value.mode as string);
 }
 function validTimeoutConfig(value: unknown): boolean {
   return record(value) && integer(value.timeoutSeconds, 1, 3600) && integer(value.timeoutLimit, 0, 3);
@@ -76,16 +78,60 @@ function validMatch(value: unknown): value is Match {
     // At match end, tally already contains the final set.
     if (!winner) return false;
   }
+  return validDoublesMatch(value as unknown as Match);
+}
+function validOrder(value: unknown): value is ServiceOrder {
+  return record(value) && isAthlete(value.server) && isAthlete(value.receiver) && teamOf(value.server) !== teamOf(value.receiver);
+}
+function sameOrder(first: ServiceOrder | null, second: ServiceOrder | null): boolean {
+  return first === null || second === null ? first === second : first.server === second.server && first.receiver === second.receiver;
+}
+function validDoublesMatch(match: Match): boolean {
+  if (match.mode === 'singles') return match.doubles === null;
+  if (match.mode !== 'doubles' || !record(match.doubles)) return false;
+  const d = match.doubles;
+  if (!(d.server === null || isAthlete(d.server)) || !(d.receiver === null || isAthlete(d.receiver))
+    || typeof d.confirmed !== 'boolean' || !(d.previous === null || validOrder(d.previous))) return false;
+  if (d.server && teamOf(d.server) !== match.firstServer) return false;
+  if (d.receiver && (!d.server || teamOf(d.receiver) === teamOf(d.server))) return false;
+  if (d.confirmed && (!d.server || !d.receiver)) return false;
+  if ((!d.confirmed && (match.points.A || match.points.B || match.winner || match.pending === 'betweenSets' || match.pending === 'deciding'))
+    || (!match.firstServer && (d.server || d.receiver || d.confirmed))) return false;
+  if (d.previous && d.server && d.receiver !== receiverForNextSet(d.previous, d.server)) return false;
+  for (let i = 0; i < match.completed.length; i++) {
+    const metadata = match.completed[i]!.doubles;
+    if (!metadata || !validOrder(metadata.initial) || !(metadata.receptionChange === null || validOrder(metadata.receptionChange))) return false;
+    if (i > 0) {
+      const prior = match.completed[i - 1]!.doubles!;
+      if (teamOf(metadata.initial.server) === teamOf(prior.initial.server)
+        || metadata.initial.receiver !== receiverForNextSet(prior.receptionChange ?? prior.initial, metadata.initial.server)) return false;
+    }
+  }
+  const closed = !!match.winner || match.pending === 'betweenSets';
+  const prior = match.completed.at(closed ? -2 : -1)?.doubles;
+  if (!sameOrder(d.previous, prior ? prior.receptionChange ?? prior.initial : null)) return false;
+  if (prior && match.firstServer !== other(teamOf(prior.initial.server))) return false;
+  if (closed) {
+    const last = match.completed.at(-1)!.doubles!;
+    if (last.initial.server !== d.server || last.initial.receiver !== d.receiver || !sameOrder(last.receptionChange, d.receptionChange?.order ?? null)) return false;
+  }
+  if (d.receptionChange !== null) {
+    const change = d.receptionChange;
+    if (!record(change) || !integer(change.turn, 0, 8) || !validOrder(change.order) || !d.server || !d.receiver
+      || !match.rules.decidingSwitch || Math.max(match.points.A, match.points.B) < 5 || !(match.decidingSwitched || match.pending === 'deciding')) return false;
+    const before = advanceOrder({ server: d.server, receiver: d.receiver }, change.turn);
+    if (change.order.server !== before.server || change.order.receiver !== partner(before.receiver)) return false;
+  } else if (match.decidingSwitched || match.pending === 'deciding') return false;
   return true;
 }
 export function encodeGame(settings: Settings, session: Session, timeouts: Timeouts = newTimeouts(settings), preparation: Preparation = inferPreparation(session)): string {
-  return JSON.stringify({ schema: 4, settings, session, timeouts, phase: preparation.phase, warmup: preparation.warmup } satisfies SavedGame);
+  return JSON.stringify({ schema: 5, settings, session, timeouts, phase: preparation.phase, warmup: preparation.warmup } satisfies SavedGame);
 }
 function validPreparation(value: Record<string, unknown>, session: Session, timeouts: Timeouts): value is Record<string, unknown> & Preparation {
   const match = session.current;
   const expected = inferPreparation(session).phase;
   if (value.phase === 'warmupPrompt' || value.phase === 'warmup') {
-    if (!match.firstServer || match.winner || match.pending || match.completed.length || match.points.A || match.points.B
+    if (expected !== 'playing' || !match.firstServer || match.winner || match.pending || match.completed.length || match.points.A || match.points.B
       || timeoutBusy(timeouts)) return false;
   } else if (value.phase !== expected) return false;
   if (value.phase !== 'warmup') return value.warmup === null;
@@ -97,17 +143,23 @@ function validPreparation(value: Record<string, unknown>, session: Session, time
 const timeoutBusy = (timeouts: Timeouts) => !!(timeouts.active || timeouts.request || timeouts.correction);
 export function decodeGame(raw: string): SavedGame {
   const data: unknown = JSON.parse(raw);
-  if (!record(data) || ![1, 2, 3, 4].includes(data.schema as number) || !record(data.settings)) throw new Error('Arquivo de partida inválido ou incompatível.');
+  if (!record(data) || ![1, 2, 3, 4, 5].includes(data.schema as number) || !record(data.settings)) throw new Error('Arquivo de partida inválido ou incompatível.');
   // Old saves predate timeouts: keep the match/history and grant the default rights.
   const legacySettings = data.schema === 1 ? { ...DEFAULT_TIMEOUT_CONFIG, ...data.settings } : data.settings;
-  const settings = (data.schema as number) >= 3 ? legacySettings : { colors: DEFAULT_PLAYER_COLORS, ...legacySettings };
+  const legacyColors = (data.schema as number) >= 3 ? legacySettings : { colors: DEFAULT_PLAYER_COLORS, ...legacySettings };
+  const settings = data.schema === 5 ? legacyColors : { mode: 'singles', athleteColors: DEFAULT_ATHLETE_COLORS, ...legacyColors };
+  if (data.schema !== 5 && record(data.session) && Array.isArray(data.session.history)) {
+    const migrate = (match: unknown) => record(match) ? { mode: 'singles', doubles: null, ...match } : match;
+    data.session = { current: migrate(data.session.current), history: data.session.history.map(migrate) };
+  }
   if (!validSettings(settings) || !record(data.session)
     || !validMatch(data.session.current) || !Array.isArray(data.session.history)
     || !data.session.history.every(validMatch)) throw new Error('Arquivo de partida inválido ou incompatível.');
   const timeouts = data.schema === 1 ? newTimeouts(settings) : data.timeouts;
   if (!validTimeouts(timeouts, data.session.current)) throw new Error('Estado de tempo técnico inválido.');
   const session = data.session as unknown as Session;
-  if (data.schema === 4 && !validPreparation(data, session, timeouts)) throw new Error('Fase de preparação inválida.');
-  const preparation = data.schema === 4 ? { phase: data.phase, warmup: data.warmup } as Preparation : inferPreparation(session);
-  return { schema: 4, settings, session, timeouts, ...preparation };
+  if (session.history.some(snapshot => snapshot.mode !== session.current.mode)) throw new Error('Modalidade inconsistente no histórico.');
+  if ((data.schema as number) >= 4 && !validPreparation(data, session, timeouts)) throw new Error('Fase de preparação inválida.');
+  const preparation = (data.schema as number) >= 4 ? { phase: data.phase, warmup: data.warmup } as Preparation : inferPreparation(session);
+  return { schema: 5, settings, session, timeouts, ...preparation };
 }
