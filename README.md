@@ -1,17 +1,17 @@
-# Saque Certo · v2.0.0
+# Saque Certo · v2.0.1
 
 Assistente de arbitragem de tênis de mesa para **individual (1 × 1) e duplas (2 × 2)**, feito com React Native, Expo e TypeScript. Complementa o placar físico: registra pontos, indica quem saca/recebe, confirma trocas de lado e apresenta os resultados para transcrição da súmula.
 
 ## Executar no Windows e Android
 
-Instale Node.js LTS e Expo Go compatível com SDK 57. Na raiz do projeto:
+Instale Node.js LTS e Expo Go compatível com SDK 58. Na raiz do projeto:
 
 ```powershell
 npm ci
 npx expo start --go --clear --port 8082
 ```
 
-Leia o QR Code no Expo Go, com celular e computador na mesma rede. Alternativa por túnel: `npx expo start --go --tunnel`. Confira **V2.0.0** no menu.
+Leia o QR Code no Expo Go, com celular e computador na mesma rede. Alternativa por túnel: `npx expo start --go --tunnel`. Confira **V2.0.1** no menu.
 
 ## Nova partida e preparação
 
