@@ -1,4 +1,6 @@
-# Saque Certo · v2.0.1
+![Logo oficial do Saque Certo](assets/branding/logo.png)
+
+# Saque Certo · v2.1.0
 
 Assistente de arbitragem de tênis de mesa para **individual (1 × 1) e duplas (2 × 2)**, feito com React Native, Expo e TypeScript. Complementa o placar físico: registra pontos, indica quem saca/recebe, confirma trocas de lado e apresenta os resultados para transcrição da súmula.
 
@@ -11,7 +13,26 @@ npm ci
 npx expo start --go --clear --port 8082
 ```
 
-Leia o QR Code no Expo Go, com celular e computador na mesma rede. Alternativa por túnel: `npx expo start --go --tunnel`. Confira **V2.0.1** no menu.
+Leia o QR Code no Expo Go, com celular e computador na mesma rede. Alternativa por túnel: `npx expo start --go --tunnel`. Confira **V2.1.0** no menu.
+
+## APK Android independente
+
+O projeto está preparado para EAS Build, com o nome **Saque Certo**, pacote **com.saque.certo**, orientação landscape e identidade visual oficial. O ícone adaptativo usa fundo azul-escuro e margem para as máscaras Android; a abertura nativa é discreta e não adiciona etapas à partida.
+
+```powershell
+npm ci
+npx eas-cli@latest login
+npx eas-cli@latest init
+npx eas-cli build --platform android --profile preview
+```
+
+No primeiro `init`, vincule ao seu projeto Expo existente ou crie o projeto `saque-certo`. O EAS adicionará a identificação pública do projeto ao app.json. Na primeira build, autorize as credenciais Android pelo terminal; em atualizações, preserve a mesma assinatura. Não salve senhas ou chaves no repositório.
+
+O perfil **preview** gera APK de distribuição interna, sem cliente de desenvolvimento: código e recursos ficam no aplicativo, sem depender do Metro ou do Expo Go. Baixe o APK pelo link ao final da build ou pelo painel Expo. O perfil **production** gera AAB para eventual distribuição pela loja; nenhuma publicação é automática.
+
+Mantenha o pacote Android e a assinatura nas futuras atualizações. O EAS incrementa `android.versionCode` localmente em cada build; comite essa alteração para manter o contador. O guia completo **GUIA_APK.md** fica na subpasta de documentação da entrega em SaqueCertoBackups, fora do repositório.
+
+**Situação desta entrega:** configuração e recursos nativos validados; APK ainda não gerado, pois falta login na conta Expo e autorização das credenciais. O teste real sem internet deve ser feito após instalar o APK. Referência: [criar APK com EAS Build](https://docs.expo.dev/build-reference/apk/).
 
 ## Nova partida e preparação
 

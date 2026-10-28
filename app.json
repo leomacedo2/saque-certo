@@ -2,11 +2,17 @@
   "expo": {
     "name": "Saque Certo",
     "slug": "saque-certo",
-    "version": "2.0.1",
+    "version": "2.1.0",
+    "icon": "./assets/branding/app-icon.png",
     "orientation": "landscape",
     "userInterfaceStyle": "dark",
     "android": {
-      "package": "com.saque.certo"
+      "package": "com.saque.certo",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/branding/adaptive-icon.png",
+        "backgroundColor": "#08101C"
+      }
     },
     "plugins": [
       [
@@ -19,7 +25,16 @@
         }
       ],
       "expo-status-bar",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#08101C",
+          "image": "./assets/branding/splash.png",
+          "imageWidth": 240,
+          "resizeMode": "contain"
+        }
+      ]
     ]
   }
 }

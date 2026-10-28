@@ -8,3 +8,12 @@ android/
 ios/
 .DS_Store
 AGENTS.md
+credentials.json
+*.jks
+*.keystore
+*.p12
+*.p8
+*.pem
+*.key
+*.apk
+*.aab
