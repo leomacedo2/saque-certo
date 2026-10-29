@@ -45,7 +45,7 @@ function Game() {
   const preparing = ['warmupPrompt', 'warmup', 'awaitingAthleteServer', 'awaitingAthleteReceiver', 'setOrderPrompt'].includes(game.phase);
   const preMatch = game.phase === 'awaitingInitialServer';
   const blocked = !ready || menu || warmup || preparing || newMatchPrompt || timeoutBusy || !!colorPlayer;
-  const playPointSound = usePointSound(!blocked);
+  const playPointSound = usePointSound(!blocked && game.settings.pointSound);
   useEffect(() => {
     // The full-screen timer owns Back, including its alarm exit confirmation.
     if (warmup || (ready && (activeTimeout || game.phase === 'warmup'))) return;

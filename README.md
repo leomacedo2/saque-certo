@@ -1,6 +1,6 @@
 ![Logo oficial do Saque Certo](assets/branding/logo.png)
 
-# Saque Certo · v2.1.2
+# Saque Certo · v2.1.3
 
 Assistente de arbitragem de tênis de mesa para **individual (1 × 1) e duplas (2 × 2)**, feito com React Native, Expo e TypeScript. Complementa o placar físico: registra pontos, indica quem saca/recebe, confirma trocas de lado e apresenta os resultados para transcrição da súmula.
 
@@ -8,7 +8,7 @@ Assistente de arbitragem de tênis de mesa para **individual (1 × 1) e duplas (
 
 **[Baixar APK publicado v2.1.1 no GitHub](https://github.com/leomacedo2/saque-certo/releases/download/v2.1.1/SaqueCerto-v2.1.1-android.apk)**
 
-O código atual é a **v2.1.2**, com confirmação para Desfazer pelo botão Voltar do Android e um som discreto ao marcar pontos. A [build v2.1.2, compilação 5](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/5a65b585-182a-431f-a0f2-c7b7c7209855) foi enviada ao Expo. O download acima continua sendo a v2.1.1 até a nova versão ser publicada.
+O código atual é a **v2.1.3**, com confirmação para Desfazer pelo botão Voltar do Android e opção para ativar ou desativar o som dos pontos. A [build v2.1.3, compilação 6](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/cc5526b9-3164-4322-9443-64be500bc2d1) foi enviada ao Expo. O download acima continua sendo a v2.1.1 até a nova versão ser publicada.
 
 APK gerado com sucesso em 29/10/2026, compilação 3. Funciona como aplicativo independente, sem Expo Go, computador ou servidor Metro. A validação em aparelho físico ainda está pendente.
 
@@ -44,7 +44,7 @@ npm ci
 npx expo start --go --clear --port 8082
 ```
 
-Leia o QR Code no Expo Go, com celular e computador na mesma rede. Alternativa por túnel: `npx expo start --go --tunnel`. Confira **V2.1.2** no menu.
+Leia o QR Code no Expo Go, com celular e computador na mesma rede. Alternativa por túnel: `npx expo start --go --tunnel`. Confira **V2.1.3** no menu.
 
 ## Voltar do Android e Desfazer
 
@@ -52,7 +52,7 @@ Na tela do placar, o botão ou gesto Voltar do Android pede confirmação antes 
 
 Menus e seletores mantêm seu comportamento de fechar ou voltar à etapa anterior; aquecimento e tempo técnico mantêm seus próprios controles de saída. Confirmações obrigatórias de troca de lados e a súmula final continuam protegidas.
 
-Cada ponto aceito emite um toque local de 50 milissegundos, em volume baixo, sem depender da internet. Escolher o sacador, desfazer e toques bloqueados não emitem esse som. O volume de mídia do aparelho continua valendo; os alarmes dos cronômetros permanecem separados.
+Com **Menu → Preferências → Som ao marcar ponto** ativado, cada ponto aceito emite um toque local de 50 milissegundos, em volume baixo, sem depender da internet. Para desativar, desligue essa opção e toque em **Salvar configurações**. A escolha permanece ao reabrir o aplicativo e não altera os alarmes de aquecimento e tempo técnico. A opção começa ativada, inclusive ao recuperar partidas de versões anteriores. Escolher o sacador, desfazer e toques bloqueados não emitem esse som. O volume de mídia do aparelho continua valendo.
 
 ## APK Android independente
 

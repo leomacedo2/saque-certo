@@ -22,7 +22,7 @@ export function SettingsPanel({ settings, mode, timeouts, onRestore, restoreDisa
   const identities: readonly ColorIdentity[] = mode === 'doubles' ? ATHLETES : ['A', 'B'];
   const colorFor = (id: ColorIdentity) => PLAYER_PALETTE[id === 'A' || id === 'B' ? settings.colors[id] : settings.athleteColors[id]].hex;
   const restoreEntry = <Button label="Restaurar tempo técnico" secondary disabled={restoreDisabled || timeouts.used.A + timeouts.used.B === 0} onPress={() => setRestoring(true)} />;
-  const toggle = (key: 'haptics' | 'doubleTapGuard' | 'highContrast' | 'decidingSwitch', label: string) =>
+  const toggle = (key: 'haptics' | 'pointSound' | 'doubleTapGuard' | 'highContrast' | 'decidingSwitch', label: string) =>
     <View style={styles.row} key={key}><Text style={styles.label}>{label}</Text><Switch accessibilityLabel={label} value={draft[key]} onValueChange={value => setDraft(old => ({ ...old, [key]: value }))} trackColor={{ false: '#344156', true: '#437A64' }} thumbColor={draft[key] ? palette.green : '#A6B4C9'} /></View>;
   const save = () => {
     const points = Number(target);
@@ -64,6 +64,8 @@ export function SettingsPanel({ settings, mode, timeouts, onRestore, restoreDisa
         <View style={styles.options}>{identities.map(player => <Pressable key={player} accessibilityRole="button" accessibilityLabel={`Cor ${player} no menu`} onPress={() => onColor(player)} style={[styles.option, { borderColor: colorFor(player) }]}><Text style={{ color: colorFor(player) }}>Cor {player}</Text></Pressable>)}</View>
         <Text style={styles.section}>PREFERÊNCIAS</Text>
         {toggle('haptics', 'Vibração dos toques')}
+        {toggle('pointSound', 'Som ao marcar ponto')}
+        <Text style={shared.body}>Controla apenas o toque dos pontos. Os alarmes do aquecimento e do tempo técnico continuam independentes. A alteração vale ao salvar.</Text>
         {toggle('doubleTapGuard', 'Proteção contra toques duplicados (250 ms)')}
         {toggle('highContrast', 'Alto contraste dos números')}
         <Text style={styles.section}>AQUECIMENTO</Text>
@@ -71,7 +73,7 @@ export function SettingsPanel({ settings, mode, timeouts, onRestore, restoreDisa
         <Text style={shared.body}>Ao terminar, o alarme toca até você pará-lo. A reprodução respeita o áudio e as restrições do dispositivo.</Text>
         {!!error && <Text accessibilityRole="alert" style={{ color: palette.warning }}>{error}</Text>}
         <Button label="Salvar configurações" onPress={save} />
-        <Text style={styles.version}>SAQUE CERTO · V2.1.2</Text>
+        <Text style={styles.version}>SAQUE CERTO · V2.1.3</Text>
       </ScrollView>
     </View>
     {restoring && <Dialog title="Restaurar tempo técnico">

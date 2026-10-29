@@ -217,6 +217,25 @@ describe('desfazer e recuperação', () => {
     expect(confirm(saved.session)).toEqual(confirm(s));
     expect(reduceSession(saved.session, { type: 'undo' })).toEqual(reduceSession(s, { type: 'undo' }));
   });
+  test.each([true, false])('preserva preferência de som dos pontos: %s', pointSound => {
+    const session = fiveThree();
+    const saved = decodeGame(encodeGame({ ...DEFAULT_SETTINGS, pointSound }, session));
+    expect(saved.settings.pointSound).toBe(pointSound);
+    expect(saved.session).toEqual(session);
+  });
+  test('recupera partidas anteriores à preferência de som sem perder o histórico', () => {
+    const session = fiveThree();
+    const data = JSON.parse(encodeGame(DEFAULT_SETTINGS, session));
+    delete data.settings.pointSound;
+    const saved = decodeGame(JSON.stringify(data));
+    expect(saved.settings.pointSound).toBe(true);
+    expect(saved.session).toEqual(session);
+  });
+  test('rejeita preferência de som dos pontos com tipo inválido', () => {
+    const data = JSON.parse(encodeGame(DEFAULT_SETTINGS, newSession()));
+    data.settings.pointSound = 'false';
+    expect(() => decodeGame(JSON.stringify(data))).toThrow();
+  });
   test('todos os estados de uma partida completa podem ser recuperados', () => {
     let s = started();
     for (let i = 0; i < 3; i++) {

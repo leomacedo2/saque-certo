@@ -16,7 +16,7 @@ function pair(value: unknown): value is { A: number; B: number } {
 export function validSettings(value: unknown): value is Settings {
   return record(value) && integer(value.target, 2, 99)
     && [1, 3, 5, 7].includes(value.bestOf as number)
-    && ['decidingSwitch', 'haptics', 'doubleTapGuard', 'highContrast', 'sound'].every(key => typeof value[key] === 'boolean')
+    && ['decidingSwitch', 'haptics', 'pointSound', 'doubleTapGuard', 'highContrast', 'sound'].every(key => typeof value[key] === 'boolean')
     && integer(value.warmupSeconds, 10, 3600)
     && validTimeoutConfig(value) && validPlayerColors(value.colors) && validAthleteColors(value.athleteColors)
     && ['singles', 'doubles'].includes(value.mode as string);
@@ -145,7 +145,8 @@ export function decodeGame(raw: string): SavedGame {
   const data: unknown = JSON.parse(raw);
   if (!record(data) || ![1, 2, 3, 4, 5].includes(data.schema as number) || !record(data.settings)) throw new Error('Arquivo de partida inválido ou incompatível.');
   // Old saves predate timeouts: keep the match/history and grant the default rights.
-  const legacySettings = data.schema === 1 ? { ...DEFAULT_TIMEOUT_CONFIG, ...data.settings } : data.settings;
+  const pointPreferences = { pointSound: DEFAULT_SETTINGS.pointSound, ...data.settings };
+  const legacySettings = data.schema === 1 ? { ...DEFAULT_TIMEOUT_CONFIG, ...pointPreferences } : pointPreferences;
   const legacyColors = (data.schema as number) >= 3 ? legacySettings : { colors: DEFAULT_PLAYER_COLORS, ...legacySettings };
   const settings = data.schema === 5 ? legacyColors : { mode: 'singles', athleteColors: DEFAULT_ATHLETE_COLORS, ...legacyColors };
   if (data.schema !== 5 && record(data.session) && Array.isArray(data.session.history)) {

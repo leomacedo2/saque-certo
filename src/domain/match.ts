@@ -14,6 +14,7 @@ export interface Rules {
 }
 export interface Preferences {
   haptics: boolean;
+  pointSound: boolean;
   doubleTapGuard: boolean;
   highContrast: boolean;
   warmupSeconds: number;
@@ -25,7 +26,7 @@ export const DEFAULT_SETTINGS: Settings = {
   colors: DEFAULT_PLAYER_COLORS,
   mode: 'singles', athleteColors: DEFAULT_ATHLETE_COLORS,
   target: 11, bestOf: 3, decidingSwitch: true,
-  haptics: false, doubleTapGuard: false, highContrast: false,
+  haptics: false, pointSound: true, doubleTapGuard: false, highContrast: false,
   warmupSeconds: 120, sound: false,
 };
 export interface FinishedSet {
