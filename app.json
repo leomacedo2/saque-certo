@@ -8,11 +8,14 @@
     "userInterfaceStyle": "dark",
     "android": {
       "package": "com.saque.certo",
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/branding/adaptive-icon.png",
         "backgroundColor": "#08101C"
-      }
+      },
+      "permissions": [
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "plugins": [
       [
@@ -35,6 +38,12 @@
           "resizeMode": "contain"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5c7304a9-58ff-4df9-8e0d-47c0d1703bd0"
+      }
+    },
+    "owner": "leomacedo"
   }
 }

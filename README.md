@@ -32,7 +32,7 @@ O perfil **preview** gera APK de distribuição interna, sem cliente de desenvol
 
 Mantenha o pacote Android e a assinatura nas futuras atualizações. O EAS incrementa `android.versionCode` localmente em cada build; comite essa alteração para manter o contador. O guia completo **GUIA_APK.md** fica na subpasta de documentação da entrega em SaqueCertoBackups, fora do repositório.
 
-**Situação desta entrega:** configuração e recursos nativos validados; APK ainda não gerado, pois falta login na conta Expo e autorização das credenciais. O teste real sem internet deve ser feito após instalar o APK. Referência: [criar APK com EAS Build](https://docs.expo.dev/build-reference/apk/).
+**Situação desta entrega:** projeto vinculado à conta Expo `leomacedo`, com assinatura Android criada mediante autorização e mantida no Expo. A geração do APK v2.1.0, compilação 2, foi enviada em 29/10/2026: acompanhe o andamento e baixe o instalador na [página da build](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/39966dc7-49b7-422e-925b-ad94dbf75b1c). O teste real sem internet deve ser feito após instalar o APK. Referência: [criar APK com EAS Build](https://docs.expo.dev/build-reference/apk/).
 
 ## Nova partida e preparação
 
