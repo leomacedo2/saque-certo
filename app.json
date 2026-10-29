@@ -2,13 +2,13 @@
   "expo": {
     "name": "Saque Certo",
     "slug": "saque-certo",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "icon": "./assets/branding/app-icon.png",
     "orientation": "landscape",
     "userInterfaceStyle": "dark",
     "android": {
       "package": "com.saque.certo",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/branding/adaptive-icon.png",
         "backgroundColor": "#08101C"

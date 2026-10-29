@@ -1,6 +1,6 @@
 ![Logo oficial do Saque Certo](assets/branding/logo.png)
 
-# Saque Certo · v2.1.0
+# Saque Certo · v2.1.1
 
 Assistente de arbitragem de tênis de mesa para **individual (1 × 1) e duplas (2 × 2)**, feito com React Native, Expo e TypeScript. Complementa o placar físico: registra pontos, indica quem saca/recebe, confirma trocas de lado e apresenta os resultados para transcrição da súmula.
 
@@ -13,7 +13,7 @@ npm ci
 npx expo start --go --clear --port 8082
 ```
 
-Leia o QR Code no Expo Go, com celular e computador na mesma rede. Alternativa por túnel: `npx expo start --go --tunnel`. Confira **V2.1.0** no menu.
+Leia o QR Code no Expo Go, com celular e computador na mesma rede. Alternativa por túnel: `npx expo start --go --tunnel`. Confira **V2.1.1** no menu.
 
 ## APK Android independente
 
@@ -32,7 +32,7 @@ O perfil **preview** gera APK de distribuição interna, sem cliente de desenvol
 
 Mantenha o pacote Android e a assinatura nas futuras atualizações. O EAS incrementa `android.versionCode` localmente em cada build; comite essa alteração para manter o contador. O guia completo **GUIA_APK.md** fica na subpasta de documentação da entrega em SaqueCertoBackups, fora do repositório.
 
-**Situação desta entrega:** projeto vinculado à conta Expo `leomacedo`, com assinatura Android criada mediante autorização e mantida no Expo. A geração do APK v2.1.0, compilação 2, foi enviada em 29/10/2026: acompanhe o andamento e baixe o instalador na [página da build](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/39966dc7-49b7-422e-925b-ad94dbf75b1c). O teste real sem internet deve ser feito após instalar o APK. Referência: [criar APK com EAS Build](https://docs.expo.dev/build-reference/apk/).
+**Situação desta entrega:** projeto vinculado à conta Expo `leomacedo`, com assinatura Android mantida no Expo. A v2.1.1 corrige o arquivo de dependências que impediu a instalação na primeira build; a instalação limpa foi conferida com npm 10.9.9, usado pelo servidor. A [build da v2.1.1, compilação 3](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/6c7b4903-f974-4a0a-9de9-e312deeb09ce) foi enviada em 29/10/2026; acompanhe o andamento e baixe o APK nessa página quando concluída. O teste real sem internet deve ser feito após instalar o APK. Referência: [criar APK com EAS Build](https://docs.expo.dev/build-reference/apk/).
 
 ## Nova partida e preparação
 
