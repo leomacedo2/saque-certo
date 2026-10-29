@@ -88,7 +88,7 @@ export function SettingsPanel({ settings, mode, timeouts, onRestore, restoreDisa
         <Text style={shared.body}>Ao terminar, o alarme toca até você pará-lo. A reprodução respeita o áudio e as restrições do dispositivo.</Text>
         {!!error && <Text accessibilityRole="alert" style={{ color: palette.warning }}>{error}</Text>}
         <Button label="Salvar configurações" onPress={() => save()} />
-        <Text style={styles.version}>SAQUE CERTO · V2.1.4</Text>
+        <Text style={styles.version}>SAQUE CERTO · V2.1.5</Text>
       </ScrollView>
     </View>
     {restoring && <Dialog title="Restaurar tempo técnico">
@@ -102,6 +102,7 @@ export function SettingsPanel({ settings, mode, timeouts, onRestore, restoreDisa
       <View style={shared.actions}>
         <Button label="Salvar" onPress={() => save(exitAction)} />
         <Button label="Cancelar" secondary onPress={() => setExitAction(null)} />
+        <Button label="Fechar sem salvar" secondary onPress={() => { setExitAction(null); onClose(); }} />
       </View>
     </Dialog></View>}
   </View>;
