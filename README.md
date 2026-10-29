@@ -1,12 +1,14 @@
 ![Logo oficial do Saque Certo](assets/branding/logo.png)
 
-# Saque Certo · v2.1.1
+# Saque Certo · v2.1.2
 
 Assistente de arbitragem de tênis de mesa para **individual (1 × 1) e duplas (2 × 2)**, feito com React Native, Expo e TypeScript. Complementa o placar físico: registra pontos, indica quem saca/recebe, confirma trocas de lado e apresenta os resultados para transcrição da súmula.
 
 ## Baixar e instalar no Android
 
-**[Baixar Saque Certo v2.1.1 para Android (.apk)](https://expo.dev/artifacts/eas/WGh5SE0YzsD35WlNJwds2wzIvnELaaDjsP3-VmYLROs.apk)**
+**[Baixar APK publicado v2.1.1 no GitHub](https://github.com/leomacedo2/saque-certo/releases/download/v2.1.1/SaqueCerto-v2.1.1-android.apk)**
+
+O código atual é a **v2.1.2**, com confirmação para Desfazer pelo botão Voltar do Android e um som discreto ao marcar pontos. A [build v2.1.2, compilação 5](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/5a65b585-182a-431f-a0f2-c7b7c7209855) foi enviada ao Expo. O download acima continua sendo a v2.1.1 até a nova versão ser publicada.
 
 APK gerado com sucesso em 29/10/2026, compilação 3. Funciona como aplicativo independente, sem Expo Go, computador ou servidor Metro. A validação em aparelho físico ainda está pendente.
 
@@ -18,7 +20,7 @@ APK gerado com sucesso em 29/10/2026, compilação 3. Funciona como aplicativo i
 
 O APK é para Android. O armazenamento é separado do Expo Go: partidas feitas nele não são transferidas automaticamente. Em futuras atualizações, instale o novo APK sobre o anterior, preservando pacote e assinatura; desinstalar ou limpar os dados apaga a partida salva.
 
-O arquivo acima está hospedado no Expo. O painel informa validade desta build até **12/11/2026**; para manter o download no GitHub, anexe o APK a uma Release conforme explicado abaixo. [Detalhes da build](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/6c7b4903-f974-4a0a-9de9-e312deeb09ce).
+O arquivo acima está hospedado no GitHub Releases. [Detalhes da build v2.1.1](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/6c7b4903-f974-4a0a-9de9-e312deeb09ce).
 
 ## Disponibilizar o APK no GitHub Releases
 
@@ -42,7 +44,15 @@ npm ci
 npx expo start --go --clear --port 8082
 ```
 
-Leia o QR Code no Expo Go, com celular e computador na mesma rede. Alternativa por túnel: `npx expo start --go --tunnel`. Confira **V2.1.1** no menu.
+Leia o QR Code no Expo Go, com celular e computador na mesma rede. Alternativa por túnel: `npx expo start --go --tunnel`. Confira **V2.1.2** no menu.
+
+## Voltar do Android e Desfazer
+
+Na tela do placar, o botão ou gesto Voltar do Android pede confirmação antes de desfazer a última ação. **Cancelar** ou Voltar novamente fecha o aviso sem alterar a partida. O botão **Desfazer** do próprio aplicativo continua direto, sem aviso. Quando não há histórico para desfazer, Voltar pergunta se deseja sair.
+
+Menus e seletores mantêm seu comportamento de fechar ou voltar à etapa anterior; aquecimento e tempo técnico mantêm seus próprios controles de saída. Confirmações obrigatórias de troca de lados e a súmula final continuam protegidas.
+
+Cada ponto aceito emite um toque local de 50 milissegundos, em volume baixo, sem depender da internet. Escolher o sacador, desfazer e toques bloqueados não emitem esse som. O volume de mídia do aparelho continua valendo; os alarmes dos cronômetros permanecem separados.
 
 ## APK Android independente
 

@@ -2,13 +2,14 @@ import { StatusBar } from 'expo-status-bar';
 import { useKeepAwake } from 'expo-keep-awake';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { PlayerId, nextServer } from './src/domain/match';
 import { changeAthleteColor, changePlayerColor, ColorIdentity, teamHexColors, PLAYER_PALETTE } from './src/domain/colors';
 import { Mode, teamName } from './src/domain/doubles';
 import { timeoutBlocksPlay } from './src/domain/timeouts';
 import { useGame } from './src/hooks/useGame';
+import { usePointSound } from './src/hooks/usePointSound';
 import { Button, Dialog, shared } from './src/ui/Controls';
 import { Scoreboard } from './src/ui/Scoreboard';
 import { MatchSummary } from './src/ui/MatchSummary';
@@ -36,6 +37,7 @@ function Game() {
   const playerColors = teamHexColors(game.settings, match.mode);
   const playerName = (player: PlayerId) => teamName(match, player);
   const lastTap = useRef(-Infinity);
+  const backAlertOpen = useRef(false);
   const server = nextServer(match);
   const ready = game.status === 'ready';
   const timeoutBusy = timeoutBlocksPlay(game.timeouts);
@@ -43,10 +45,12 @@ function Game() {
   const preparing = ['warmupPrompt', 'warmup', 'awaitingAthleteServer', 'awaitingAthleteReceiver', 'setOrderPrompt'].includes(game.phase);
   const preMatch = game.phase === 'awaitingInitialServer';
   const blocked = !ready || menu || warmup || preparing || newMatchPrompt || timeoutBusy || !!colorPlayer;
+  const playPointSound = usePointSound(!blocked);
   useEffect(() => {
     // The full-screen timer owns Back, including its alarm exit confirmation.
     if (warmup || (ready && (activeTimeout || game.phase === 'warmup'))) return;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (backAlertOpen.current) return true;
       if (colorPlayer) { setColorPlayer(null); return true; }
       if (game.phase === 'warmupPrompt') { game.dispatchPreparation({ type: 'cancelInitialServer' }); return true; }
       if (['awaitingAthleteServer', 'awaitingAthleteReceiver', 'setOrderPrompt'].includes(game.phase)) { game.dispatch({ type: 'undo' }); return true; }
@@ -56,17 +60,34 @@ function Game() {
       if (game.timeouts.correction) { game.dispatchTimeout({ type: 'cancelRestore' }); return true; }
       if (match.pending === 'manual') { game.dispatch({ type: 'cancelManual' }); return true; }
       // Official confirmations must never be dismissed using Android Back.
-      if (match.pending || !ready) return true;
-      return false;
+      if (match.pending || match.winner || !ready) return true;
+      backAlertOpen.current = true;
+      const closeAlert = () => { backAlertOpen.current = false; };
+      if (game.session.history.length) {
+        Alert.alert('Desfazer a última ação?',
+          'Deseja realmente desfazer a última ação da partida? Para desfazer diretamente, sem esta confirmação, use o botão Desfazer do aplicativo.', [
+            { text: 'Cancelar', style: 'cancel', onPress: closeAlert },
+            { text: 'Desfazer', onPress: () => {
+              closeAlert(); game.dispatch({ type: 'undo' }); lastTap.current = -Infinity;
+            } },
+          ], { cancelable: true, onDismiss: closeAlert });
+      } else {
+        Alert.alert('Sair do Saque Certo?', 'Não há nenhuma ação para desfazer. Deseja sair do aplicativo?', [
+          { text: 'Cancelar', style: 'cancel', onPress: closeAlert },
+          { text: 'Sair', onPress: () => { closeAlert(); BackHandler.exitApp(); } },
+        ], { cancelable: true, onDismiss: closeAlert });
+      }
+      return true;
     });
     return () => subscription.remove();
-  }, [menu, warmup, newMatchPrompt, match.pending, ready, game, activeTimeout, colorPlayer]);
+  }, [menu, warmup, newMatchPrompt, match.pending, match.winner, ready, game, activeTimeout, colorPlayer]);
   const touchPlayer = (player: PlayerId) => {
     if (blocked || match.pending || match.winner) return;
     const now = Date.now();
     if (game.settings.doubleTapGuard && now - lastTap.current < 250) return;
     lastTap.current = now;
     game.dispatch({ type: preMatch ? 'selectServer' : 'point', player });
+    if (!preMatch && game.phase === 'playing') playPointSound();
     if (game.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
   };
   const confirmNew = () => { setMenu(false); setNewMode(ready ? match.mode : game.saved?.settings.mode ?? 'singles'); setNewMatchPrompt(true); };
