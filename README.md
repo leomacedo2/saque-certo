@@ -4,7 +4,36 @@
 
 Assistente de arbitragem de tênis de mesa para **individual (1 × 1) e duplas (2 × 2)**, feito com React Native, Expo e TypeScript. Complementa o placar físico: registra pontos, indica quem saca/recebe, confirma trocas de lado e apresenta os resultados para transcrição da súmula.
 
-## Executar no Windows e Android
+## Baixar e instalar no Android
+
+**[Baixar Saque Certo v2.1.1 para Android (.apk)](https://expo.dev/artifacts/eas/WGh5SE0YzsD35WlNJwds2wzIvnELaaDjsP3-VmYLROs.apk)**
+
+APK gerado com sucesso em 29/10/2026, compilação 3. Funciona como aplicativo independente, sem Expo Go, computador ou servidor Metro. A validação em aparelho físico ainda está pendente.
+
+1. Abra este README no celular Android e toque no link de download acima.
+2. Aguarde o download e abra o arquivo `.apk` pela notificação ou pela pasta Downloads.
+3. Se o Android solicitar, permita que o navegador ou gerenciador de arquivos instale aplicativos dessa origem e retome a instalação.
+4. Toque em **Instalar** e depois em **Abrir**. Procure o nome **Saque Certo** e o ícone com as duas raquetes; confira **V2.1.1** no menu.
+5. Para testar sem internet, feche o aplicativo, ative o modo avião e abra novamente. Confira pontos, saques, duplas, aquecimento, tempo técnico e som. Feche e reabra para conferir a recuperação da partida.
+
+O APK é para Android. O armazenamento é separado do Expo Go: partidas feitas nele não são transferidas automaticamente. Em futuras atualizações, instale o novo APK sobre o anterior, preservando pacote e assinatura; desinstalar ou limpar os dados apaga a partida salva.
+
+O arquivo acima está hospedado no Expo. O painel informa validade desta build até **12/11/2026**; para manter o download no GitHub, anexe o APK a uma Release conforme explicado abaixo. [Detalhes da build](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/6c7b4903-f974-4a0a-9de9-e312deeb09ce).
+
+## Disponibilizar o APK no GitHub Releases
+
+Para quem mantém o repositório, após testar o APK:
+
+1. Faça commit e push dos arquivos desta versão para o GitHub.
+2. No repositório, abra **Releases → Draft a new release**.
+3. Escolha ou crie a tag `v2.1.1`, apontando para o commit desta versão, e use o título **Saque Certo v2.1.1**.
+4. Descreva as mudanças e anexe o instalador com o nome `SaqueCerto-v2.1.1-android.apk` na área de arquivos da Release. O APK deve ser anexado ali, sem adicioná-lo às pastas do código.
+5. Clique em **Publish release** quando estiver pronto para distribuir.
+6. Copie o endereço do APK anexado e substitua o link de download no início deste README. Faça commit e push dessa atualização.
+
+Os arquivos **Source code (zip/tar.gz)** gerados pelo GitHub são o código-fonte; para instalar no celular, baixe o arquivo com extensão **.apk**. Novas versões podem ter suas próprias Releases, preservando as anteriores. [Instruções oficiais do GitHub](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
+
+## Executar o projeto para desenvolvimento
 
 Instale Node.js LTS e Expo Go compatível com SDK 58. Na raiz do projeto:
 
@@ -32,7 +61,7 @@ O perfil **preview** gera APK de distribuição interna, sem cliente de desenvol
 
 Mantenha o pacote Android e a assinatura nas futuras atualizações. O EAS incrementa `android.versionCode` localmente em cada build; comite essa alteração para manter o contador. O guia completo **GUIA_APK.md** fica na subpasta de documentação da entrega em SaqueCertoBackups, fora do repositório.
 
-**Situação desta entrega:** projeto vinculado à conta Expo `leomacedo`, com assinatura Android mantida no Expo. A v2.1.1 corrige o arquivo de dependências que impediu a instalação na primeira build; a instalação limpa foi conferida com npm 10.9.9, usado pelo servidor. A [build da v2.1.1, compilação 3](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/6c7b4903-f974-4a0a-9de9-e312deeb09ce) foi enviada em 29/10/2026; acompanhe o andamento e baixe o APK nessa página quando concluída. O teste real sem internet deve ser feito após instalar o APK. Referência: [criar APK com EAS Build](https://docs.expo.dev/build-reference/apk/).
+**Situação desta entrega:** APK v2.1.1, compilação 3, gerado com sucesso no EAS. Projeto vinculado à conta Expo `leomacedo`, com assinatura Android mantida no Expo. A v2.1.1 corrige o arquivo de dependências que impediu a instalação na primeira build; a instalação limpa foi conferida com npm 10.9.9, usado pelo servidor. O teste real sem internet deve ser feito após instalar o APK. Referência: [criar APK com EAS Build](https://docs.expo.dev/build-reference/apk/).
 
 ## Nova partida e preparação
 
