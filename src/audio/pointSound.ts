@@ -14,7 +14,7 @@ export function createPointSound(player: PointPlayer, configure: () => Promise<v
       try {
         await configure();
         if (run !== generation) return;
-        player.volume = 0.25;
+        player.volume = 0.75;
         await player.seekTo(0);
         if (run === generation) player.play();
       } catch { /* Sound must never prevent a point from being recorded. */ }

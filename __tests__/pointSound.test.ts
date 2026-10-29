@@ -9,7 +9,7 @@ test('restarts the short sound at low volume for each accepted point', async () 
   const { player, sound } = setup();
   await sound.play();
   await sound.play();
-  expect(player.volume).toBe(0.25);
+  expect(player.volume).toBe(0.75);
   expect(player.seekTo.mock.calls).toEqual([[0], [0]]);
   expect(player.play).toHaveBeenCalledTimes(2);
 });

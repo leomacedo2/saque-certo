@@ -1,6 +1,6 @@
 ![Logo oficial do Saque Certo](assets/branding/logo.png)
 
-# Saque Certo · v2.1.5
+# Saque Certo · v2.1.6
 
 Assistente de arbitragem de tênis de mesa para **individual (1 × 1) e duplas (2 × 2)**, feito com React Native, Expo e TypeScript. Complementa o placar físico: registra pontos, indica quem saca/recebe, confirma trocas de lado e apresenta os resultados para transcrição da súmula.
 
@@ -8,7 +8,7 @@ Assistente de arbitragem de tênis de mesa para **individual (1 × 1) e duplas (
 
 **[Baixar APK publicado v2.1.1 no GitHub](https://github.com/leomacedo2/saque-certo/releases/download/v2.1.1/SaqueCerto-v2.1.1-android.apk)**
 
-O código atual é a **v2.1.5**, com as opções Salvar, Cancelar e Fechar sem salvar para configurações alteradas e sem troca automática aos cinco pontos no modo set único. Inclui também confirmação para Desfazer pelo Voltar do Android e controle do som dos pontos. A [build v2.1.5, compilação 8](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/dcaaeceb-fb2c-42c9-9d8b-4c3dc1ecff65) foi enviada ao Expo. O download acima continua sendo a v2.1.1 até a nova versão ser publicada.
+O código atual é a **v2.1.6**, com volume maior no toque dos pontos, preservando a duração curta e a opção de desligar. Inclui as opções Salvar, Cancelar e Fechar sem salvar, set único sem troca automática aos cinco e confirmação para Desfazer pelo Voltar do Android. A [build v2.1.6, compilação 9](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/a7a42893-d7a7-48ca-ac2d-6e933b676d29) foi enviada ao Expo. O download acima continua sendo a v2.1.1 até a nova versão ser publicada.
 
 APK gerado com sucesso em 29/10/2026, compilação 3. Funciona como aplicativo independente, sem Expo Go, computador ou servidor Metro. A validação em aparelho físico ainda está pendente.
 
@@ -44,7 +44,7 @@ npm ci
 npx expo start --go --clear --port 8082
 ```
 
-Leia o QR Code no Expo Go, com celular e computador na mesma rede. Alternativa por túnel: `npx expo start --go --tunnel`. Confira **V2.1.5** no menu.
+Leia o QR Code no Expo Go, com celular e computador na mesma rede. Alternativa por túnel: `npx expo start --go --tunnel`. Confira **V2.1.6** no menu.
 
 ## Configurações e set único
 
