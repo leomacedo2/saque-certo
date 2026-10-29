@@ -38,6 +38,7 @@ function Game() {
   const playerName = (player: PlayerId) => teamName(match, player);
   const lastTap = useRef(-Infinity);
   const backAlertOpen = useRef(false);
+  const closeSettings = useRef<(() => void) | null>(null);
   const server = nextServer(match);
   const ready = game.status === 'ready';
   const timeoutBusy = timeoutBlocksPlay(game.timeouts);
@@ -54,7 +55,7 @@ function Game() {
       if (colorPlayer) { setColorPlayer(null); return true; }
       if (game.phase === 'warmupPrompt') { game.dispatchPreparation({ type: 'cancelInitialServer' }); return true; }
       if (['awaitingAthleteServer', 'awaitingAthleteReceiver', 'setOrderPrompt'].includes(game.phase)) { game.dispatch({ type: 'undo' }); return true; }
-      if (menu) { setMenu(false); return true; }
+      if (menu) { closeSettings.current?.(); return true; }
       if (newMatchPrompt) { setNewMatchPrompt(false); return true; }
       if (game.timeouts.request) { game.dispatchTimeout({ type: 'cancelRequest' }); return true; }
       if (game.timeouts.correction) { game.dispatchTimeout({ type: 'cancelRestore' }); return true; }
@@ -121,7 +122,7 @@ function Game() {
   return <SafeAreaView style={styles.safe}>
     <StatusBar hidden />
     <MatchHeader match={match} preMatch={preMatch} timeouts={game.timeouts} colors={playerColors} athleteColors={game.settings.athleteColors} disabled={blocked} onColor={setColorPlayer} dispatch={game.dispatchTimeout}
-      leading={<Button label={menu ? '☰ Fechar' : '☰ Menu'} secondary disabled={!ready || preparing || newMatchPrompt || timeoutBusy || !!colorPlayer} onPress={() => setMenu(value => !value)} />}
+      leading={<Button label={menu ? '☰ Fechar' : '☰ Menu'} secondary disabled={!ready || preparing || newMatchPrompt || timeoutBusy || !!colorPlayer} onPress={() => { if (menu) closeSettings.current?.(); else setMenu(true); }} />}
       trailing={<Button label="↶ Desfazer" secondary disabled={!ready || !game.session.history.length || menu || newMatchPrompt || warmup || timeoutBusy || !!colorPlayer} onPress={() => { game.dispatch({ type: 'undo' }); lastTap.current = -Infinity; }} />} />
     {game.error && ready && <Pressable accessibilityRole="button" onPress={game.retrySave} style={styles.saveError}><Text style={styles.saveErrorText}>{game.error} · Tentar salvar</Text></Pressable>}
     <View style={styles.body}>
@@ -154,7 +155,7 @@ function Game() {
         <Text style={shared.body}>Pontuação bloqueada. Use Desfazer para corrigir o último ponto.</Text>
         <View style={shared.actions}><Button label="Nova partida" onPress={confirmNew} /></View>
       </Dialog>}
-      {menu && ready && <SettingsPanel settings={game.settings} mode={match.mode} timeouts={game.timeouts} restoreDisabled={!!match.pending || timeoutBusy}
+      {menu && ready && <SettingsPanel closeRequestRef={closeSettings} settings={game.settings} mode={match.mode} timeouts={game.timeouts} restoreDisabled={!!match.pending || timeoutBusy}
         promoteRestore={promoteTimeoutRestore(match, game.timeouts, !!match.pending || timeoutBusy)} onColor={setColorPlayer}
         onRestore={player => { setMenu(false); game.dispatchTimeout({ type: 'requestRestore', player }); }}
         onClose={() => setMenu(false)} onSave={settings => { game.setSettings(settings); setMenu(false); }} onNewMatch={confirmNew} onWarmup={() => { setMenu(false); setWarmup(true); }} swapDisabled={!!match.pending || !!match.winner || warmup} onSwap={() => { setMenu(false); game.dispatch({ type: 'requestManual' }); }} />}

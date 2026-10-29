@@ -20,6 +20,16 @@ function points(game: GameState, count: number, player: PlayerId): GameState {
   return game;
 }
 const combinations = ATHLETES.flatMap(server => athletesOf(teamOf(server) === 'A' ? 'B' : 'A').map(receiver => ({ server, receiver })));
+function decidingStart(server: AthleteId = 'A1', receiver: AthleteId = 'B1', overrides = {}): GameState {
+  let game = start(server, receiver, { bestOf: 3, ...overrides });
+  for (const winner of ['A', 'B'] as const) {
+    game = points(game, 11, winner);
+    game = act(game, { type: 'confirmSwitch' });
+    game = act(game, { type: 'selectAthleteServer', athlete: teamOf(server) === game.session.current.firstServer ? server : receiver });
+    game = act(game, { type: 'confirmSetOrder' });
+  }
+  return game;
+}
 
 test('preparação separa dupla, atleta sacador e atleta recebedor, sem pontos/tempos', () => {
   let game = newGame(settings);
@@ -121,7 +131,7 @@ test('troca manual só altera lado físico, preservando ordem e identidades', ()
 });
 
 test.each([0, 1, 2, 3, 4])('decisivo 5 × %i muda quem recebe NEXT e todo o ciclo restante', losing => {
-  let game = start('A1', 'B1', { bestOf: 1 });
+  let game = decidingStart();
   game = points(game, 4, 'A');
   game = points(game, losing, 'B');
   const before = game;
@@ -151,7 +161,7 @@ test.each([0, 1, 2, 3, 4])('decisivo 5 × %i muda quem recebe NEXT e todo o cicl
 });
 
 test('modo casual desliga conjuntamente troca física e mudança de recepção', () => {
-  const game = points(start('A1', 'B1', { bestOf: 1, decidingSwitch: false }), 5, 'A');
+  const game = points(decidingStart('A1', 'B1', { decidingSwitch: false }), 5, 'A');
   expect(game.session.current.pending).toBeNull();
   expect(game.session.current.decidingSwitched).toBe(false);
   expect(game.session.current.doubles!.receptionChange).toBeNull();
@@ -162,7 +172,7 @@ test('modo casual desliga conjuntamente troca física e mudança de recepção',
 test('propriedade: decisão aos cinco funciona para as 80 combinações de ordem, dupla e placar', () => {
   for (const initial of combinations) for (const scoring of ['A', 'B'] as const) for (let losing = 0; losing <= 4; losing++) {
     const opponent = scoring === 'A' ? 'B' : 'A';
-    let game = points(points(start(initial.server, initial.receiver, { bestOf: 1 }), 4, scoring), losing, opponent);
+    let game = points(points(decidingStart(initial.server, initial.receiver), 4, scoring), losing, opponent);
     const before = game;
     game = act(game, { type: 'point', player: scoring });
     const old = advanceOrder(initial, Math.floor((5 + losing) / 2));

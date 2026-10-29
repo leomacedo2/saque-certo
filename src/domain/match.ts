@@ -81,7 +81,7 @@ export function newSession(settings: Rules & { mode?: Mode } = DEFAULT_SETTINGS)
 }
 export function isDeciding(match: Match): boolean {
   const required = Math.floor(match.rules.bestOf / 2);
-  return match.sets.A === required && match.sets.B === required;
+  return match.rules.bestOf > 1 && match.sets.A === required && match.sets.B === required;
 }
 /** Identity-based service calculation, independent of physical ends. */
 export function nextServer(match: Match): PlayerId | null {

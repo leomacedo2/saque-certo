@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { BestOf, PlayerId, Settings } from '../domain/match';
 import { Timeouts } from '../domain/timeouts';
@@ -6,12 +6,14 @@ import { ColorIdentity, PLAYER_PALETTE } from '../domain/colors';
 import { ATHLETES, Mode } from '../domain/doubles';
 import { Button, Dialog, shared } from './Controls';
 import { palette } from './theme';
+import { hasUnsavedSettings } from './settingsDraft';
 
-export function SettingsPanel({ settings, mode, timeouts, onRestore, restoreDisabled, promoteRestore, onColor, onSave, onClose, onNewMatch, onWarmup, onSwap, swapDisabled }: {
+export function SettingsPanel({ settings, mode, timeouts, onRestore, restoreDisabled, promoteRestore, onColor, onSave, onClose, onNewMatch, onWarmup, onSwap, swapDisabled, closeRequestRef }: {
   settings: Settings; onSave: (settings: Settings) => void; onClose: () => void;
   timeouts: Timeouts; onRestore: (player: PlayerId) => void; restoreDisabled: boolean;
   promoteRestore: boolean; onColor: (player: ColorIdentity) => void; mode: Mode;
   onNewMatch: () => void; onWarmup: () => void; onSwap: () => void; swapDisabled: boolean;
+  closeRequestRef: { current: (() => void) | null };
 }) {
   const [draft, setDraft] = useState(settings);
   const [target, setTarget] = useState(String(settings.target));
@@ -19,12 +21,24 @@ export function SettingsPanel({ settings, mode, timeouts, onRestore, restoreDisa
   const [timeoutDuration, setTimeoutDuration] = useState(String(settings.timeoutSeconds));
   const [error, setError] = useState('');
   const [restoring, setRestoring] = useState(false);
+  const [exitAction, setExitAction] = useState<(() => void) | null>(null);
+  const dirty = hasUnsavedSettings(settings, draft, target, duration, timeoutDuration);
+  const requestLeave = (action: () => void) => { if (dirty) setExitAction(() => action); else action(); };
+  useEffect(() => {
+    closeRequestRef.current = () => {
+      if (exitAction) setExitAction(null);
+      else if (restoring) setRestoring(false);
+      else requestLeave(onClose);
+    };
+    return () => { closeRequestRef.current = null; };
+  });
   const identities: readonly ColorIdentity[] = mode === 'doubles' ? ATHLETES : ['A', 'B'];
   const colorFor = (id: ColorIdentity) => PLAYER_PALETTE[id === 'A' || id === 'B' ? settings.colors[id] : settings.athleteColors[id]].hex;
   const restoreEntry = <Button label="Restaurar tempo técnico" secondary disabled={restoreDisabled || timeouts.used.A + timeouts.used.B === 0} onPress={() => setRestoring(true)} />;
   const toggle = (key: 'haptics' | 'pointSound' | 'doubleTapGuard' | 'highContrast' | 'decidingSwitch', label: string) =>
     <View style={styles.row} key={key}><Text style={styles.label}>{label}</Text><Switch accessibilityLabel={label} value={draft[key]} onValueChange={value => setDraft(old => ({ ...old, [key]: value }))} trackColor={{ false: '#344156', true: '#437A64' }} thumbColor={draft[key] ? palette.green : '#A6B4C9'} /></View>;
-  const save = () => {
+  const save = (afterSave?: () => void) => {
+    setExitAction(null);
     const points = Number(target);
     const seconds = Number(duration);
     const timeoutSeconds = Number(timeoutDuration);
@@ -36,23 +50,24 @@ export function SettingsPanel({ settings, mode, timeouts, onRestore, restoreDisa
       setError('Use de 1 a 3600 segundos para o tempo técnico.'); return;
     }
     onSave({ ...draft, colors: settings.colors, athleteColors: settings.athleteColors, target: points, warmupSeconds: seconds, timeoutSeconds });
+    afterSave?.();
   };
   return <View style={styles.overlay} accessibilityViewIsModal>
-    <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Fechar configurações sem salvar" onPress={onClose} />
+    <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Fechar configurações" onPress={() => requestLeave(onClose)} />
     <View style={styles.drawer}>
-      <View style={styles.top}><Text accessibilityRole="header" style={styles.title}>Configurações</Text><Button label="Fechar" onPress={onClose} secondary /></View>
+      <View style={styles.top}><Text accessibilityRole="header" style={styles.title}>Configurações</Text><Button label="Fechar" onPress={() => requestLeave(onClose)} secondary /></View>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {promoteRestore && restoreEntry}
-        <Button label="Nova partida" secondary onPress={onNewMatch} />
-        <Button label="Aquecimento" secondary onPress={onWarmup} />
+        <Button label="Nova partida" secondary onPress={() => requestLeave(onNewMatch)} />
+        <Button label="Aquecimento" secondary onPress={() => requestLeave(onWarmup)} />
         <Text style={styles.section}>FORMATO DA PRÓXIMA PARTIDA</Text>
         <Text style={shared.body}>As regras da partida atual permanecem até iniciar uma nova partida. Preferências valem ao salvar.</Text>
         <View style={styles.row}><Text style={styles.label}>Pontos por set</Text><TextInput accessibilityLabel="Pontos por set" keyboardType="number-pad" value={target} onChangeText={setTarget} maxLength={2} style={styles.input} /></View>
         <View style={styles.options}>{([1, 3, 5, 7] as BestOf[]).map(bestOf => <Pressable key={bestOf} accessibilityRole="radio" accessibilityState={{ checked: draft.bestOf === bestOf }} onPress={() => setDraft(old => ({ ...old, bestOf }))} style={[styles.option, draft.bestOf === bestOf && styles.selected]}><Text style={[styles.optionText, draft.bestOf === bestOf && { color: palette.green }]}>{bestOf === 1 ? 'Set único' : `Melhor de ${bestOf}`}</Text></Pressable>)}</View>
-        {toggle('decidingSwitch', 'Troca aos 5 pontos no set decisivo')}
-        {!draft.decidingSwitch && <Text style={shared.body}>Formato personalizado: sem troca decisiva de lados{mode === 'doubles' ? ' nem mudança de recepção associada' : ''}. Diferente do padrão ITTF.</Text>}
+        {draft.bestOf === 1 ? <Text style={shared.body}>Set único: sem troca automática de lados aos cinco pontos.</Text> : toggle('decidingSwitch', 'Troca aos 5 pontos no set decisivo')}
+        {draft.bestOf !== 1 && !draft.decidingSwitch && <Text style={shared.body}>Formato personalizado: sem troca decisiva de lados{mode === 'doubles' ? ' nem mudança de recepção associada' : ''}. Diferente do padrão ITTF.</Text>}
         <Text style={shared.body}>Troca ao final dos sets: obrigatória. Em formatos casuais, o saque passa a alternar a cada ponto no empate em alvo − 1.</Text>
-        <Button label="Inverter lados agora" secondary disabled={swapDisabled} onPress={onSwap} />
+        <Button label="Inverter lados agora" secondary disabled={swapDisabled} onPress={() => requestLeave(onSwap)} />
         <Text style={styles.section}>TEMPO TÉCNICO</Text>
         <Text style={shared.body}>Padrão oficial: 60 segundos e um tempo por {mode === 'doubles' ? 'dupla' : 'jogador'} na partida inteira. Alterações abaixo valem somente para a próxima partida. Outros valores são formatos casuais.</Text>
         <View style={styles.options}>{[30, 60, 120, 180].map(seconds => <Button key={seconds} label={seconds === 60 ? '1 min (oficial)' : `${seconds} s`} secondary={Number(timeoutDuration) !== seconds} onPress={() => setTimeoutDuration(String(seconds))} />)}</View>
@@ -72,19 +87,27 @@ export function SettingsPanel({ settings, mode, timeouts, onRestore, restoreDisa
         <View style={styles.row}><Text style={styles.label}>Duração (segundos)</Text><TextInput accessibilityLabel="Duração do aquecimento em segundos" keyboardType="number-pad" value={duration} onChangeText={setDuration} maxLength={4} style={styles.input} /></View>
         <Text style={shared.body}>Ao terminar, o alarme toca até você pará-lo. A reprodução respeita o áudio e as restrições do dispositivo.</Text>
         {!!error && <Text accessibilityRole="alert" style={{ color: palette.warning }}>{error}</Text>}
-        <Button label="Salvar configurações" onPress={save} />
-        <Text style={styles.version}>SAQUE CERTO · V2.1.3</Text>
+        <Button label="Salvar configurações" onPress={() => save()} />
+        <Text style={styles.version}>SAQUE CERTO · V2.1.4</Text>
       </ScrollView>
     </View>
     {restoring && <Dialog title="Restaurar tempo técnico">
       <Text style={shared.body}>Selecione o jogador cujo registro foi feito por engano.</Text>
-      <View style={shared.actions}>{(['A', 'B'] as PlayerId[]).map(player => <Button key={player} label={`Restaurar para ${mode === 'doubles' ? 'Dupla' : 'Jogador'} ${player}`} secondary disabled={restoreDisabled || timeouts.used[player] === 0} onPress={() => onRestore(player)} />)}
+      <View style={shared.actions}>{(['A', 'B'] as PlayerId[]).map(player => <Button key={player} label={`Restaurar para ${mode === 'doubles' ? 'Dupla' : 'Jogador'} ${player}`} secondary disabled={restoreDisabled || timeouts.used[player] === 0} onPress={() => requestLeave(() => onRestore(player))} />)}
         <Button label="Voltar ao menu" secondary onPress={() => setRestoring(false)} />
       </View>
     </Dialog>}
+    {exitAction && <View style={styles.exitOverlay}><Dialog title="Alterações não salvas">
+      <Text style={shared.body}>Existem alterações não salvas. Deseja salvar antes de sair?</Text>
+      <View style={shared.actions}>
+        <Button label="Salvar" onPress={() => save(exitAction)} />
+        <Button label="Cancelar" secondary onPress={() => setExitAction(null)} />
+      </View>
+    </Dialog></View>}
   </View>;
 }
 const styles = StyleSheet.create({
+  exitOverlay: { ...StyleSheet.absoluteFill, zIndex: 20 },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: '#000000AA', zIndex: 10 },
   drawer: { width: '70%', maxWidth: 480, height: '100%', backgroundColor: palette.background, borderRightWidth: 1, borderColor: palette.line },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 18, paddingBottom: 8 },

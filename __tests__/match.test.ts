@@ -3,6 +3,23 @@ import { decodeGame, encodeGame } from '../src/storage/codec';
 
 const act = (s: Session, type: 'point' | 'selectServer', player: PlayerId = 'A') => reduceSession(s, { type, player });
 const confirm = (s: Session) => reduceSession(s, { type: 'confirmSwitch' });
+test.each(['singles', 'doubles'] as const)('set único em %s não troca lados nem recepção aos cinco', mode => {
+  let session = newSession({ ...DEFAULT_SETTINGS, mode, bestOf: 1, decidingSwitch: true });
+  session = reduceSession(session, { type: 'selectServer', player: 'A' });
+  if (mode === 'doubles') {
+    session = reduceSession(session, { type: 'selectAthleteServer', athlete: 'A1' });
+    session = reduceSession(session, { type: 'selectAthleteReceiver', athlete: 'B1' });
+  }
+  for (let point = 0; point < 11; point++) {
+    session = reduceSession(session, { type: 'point', player: 'A' });
+    expect(session.current.pending).toBeNull();
+    expect(session.current.left).toBe('A');
+    expect(session.current.decidingSwitched).toBe(false);
+    if (mode === 'doubles') expect(session.current.doubles!.receptionChange).toBeNull();
+  }
+  expect(session.current.winner).toBe('A');
+  expect(decodeGame(encodeGame({ ...DEFAULT_SETTINGS, mode }, session)).session).toEqual(session);
+});
 function started(overrides = {}) { return act(newSession({ ...DEFAULT_SETTINGS, ...overrides }), 'selectServer'); }
 function points(s: Session, player: PlayerId, count: number): Session {
   for (let i = 0; i < count; i++) s = act(s, 'point', player);
@@ -161,9 +178,9 @@ describe('set decisivo', () => {
     expect(s.current.pending).toBeNull();
     expect(s.current.left).toBe('A');
   });
-  test('set único também é o último set possível', () => {
+  test('set único não solicita troca automática aos cinco pontos', () => {
     const s = points(started({ bestOf: 1 }), 'A', 5);
-    expect(s.current.pending).toBe('deciding');
+    expect(s.current.pending).toBeNull();
   });
   test('alvo casual abaixo de cinco encerra sem troca intermediária', () => {
     const s = points(started({ bestOf: 1, target: 3 }), 'A', 3);

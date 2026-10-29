@@ -1,6 +1,6 @@
 ![Logo oficial do Saque Certo](assets/branding/logo.png)
 
-# Saque Certo · v2.1.3
+# Saque Certo · v2.1.4
 
 Assistente de arbitragem de tênis de mesa para **individual (1 × 1) e duplas (2 × 2)**, feito com React Native, Expo e TypeScript. Complementa o placar físico: registra pontos, indica quem saca/recebe, confirma trocas de lado e apresenta os resultados para transcrição da súmula.
 
@@ -8,7 +8,7 @@ Assistente de arbitragem de tênis de mesa para **individual (1 × 1) e duplas (
 
 **[Baixar APK publicado v2.1.1 no GitHub](https://github.com/leomacedo2/saque-certo/releases/download/v2.1.1/SaqueCerto-v2.1.1-android.apk)**
 
-O código atual é a **v2.1.3**, com confirmação para Desfazer pelo botão Voltar do Android e opção para ativar ou desativar o som dos pontos. A [build v2.1.3, compilação 6](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/cc5526b9-3164-4322-9443-64be500bc2d1) foi enviada ao Expo. O download acima continua sendo a v2.1.1 até a nova versão ser publicada.
+O código atual é a **v2.1.4**, com proteção de configurações não salvas e sem troca automática aos cinco pontos no modo set único. Inclui também confirmação para Desfazer pelo Voltar do Android e controle do som dos pontos. A [build v2.1.4, compilação 7](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/b2af5458-7eca-44e8-add6-eb172d1422f8) foi enviada ao Expo. O download acima continua sendo a v2.1.1 até a nova versão ser publicada.
 
 APK gerado com sucesso em 29/10/2026, compilação 3. Funciona como aplicativo independente, sem Expo Go, computador ou servidor Metro. A validação em aparelho físico ainda está pendente.
 
@@ -44,7 +44,13 @@ npm ci
 npx expo start --go --clear --port 8082
 ```
 
-Leia o QR Code no Expo Go, com celular e computador na mesma rede. Alternativa por túnel: `npx expo start --go --tunnel`. Confira **V2.1.3** no menu.
+Leia o QR Code no Expo Go, com celular e computador na mesma rede. Alternativa por túnel: `npx expo start --go --tunnel`. Confira **V2.1.4** no menu.
+
+## Configurações e set único
+
+Ao tentar fechar configurações alteradas, o aplicativo pergunta se deseja salvar antes de sair. **Salvar** valida e aplica os valores; **Cancelar** mantém o menu aberto com as alterações. O aviso vale para Fechar, toque fora do painel, Voltar do Android e ações que saem do menu. Se não houve alteração ou os valores foram revertidos, o menu fecha diretamente. Cores escolhidas no seletor continuam sendo aplicadas imediatamente.
+
+No formato **Set único**, não há troca automática de lados aos cinco pontos, nem mudança de recepção associada nas duplas. A inversão manual continua disponível. Nas melhores de 3, 5 ou 7, a troca do set decisivo continua conforme a configuração. Esta é uma escolha de funcionamento do formato set único no aplicativo.
 
 ## Voltar do Android e Desfazer
 
