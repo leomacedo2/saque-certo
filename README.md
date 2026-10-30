@@ -6,21 +6,21 @@ Assistente de arbitragem de tênis de mesa para **individual (1 × 1) e duplas (
 
 ## Baixar e instalar no Android
 
-**[Baixar APK publicado v2.1.1 no GitHub](https://github.com/leomacedo2/saque-certo/releases/download/v2.1.1/SaqueCerto-v2.1.1-android.apk)**
+**[Baixar Saque Certo v2.1.6 para Android (.apk)](https://github.com/leomacedo2/saque-certo/releases/download/v2.1.6/SaqueCerto-v2.1.6-android.apk)**
 
-O código atual é a **v2.1.6**, com volume maior no toque dos pontos, preservando a duração curta e a opção de desligar. Inclui as opções Salvar, Cancelar e Fechar sem salvar, set único sem troca automática aos cinco e confirmação para Desfazer pelo Voltar do Android. A [build v2.1.6, compilação 9](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/a7a42893-d7a7-48ca-ac2d-6e933b676d29) foi enviada ao Expo. O download acima continua sendo a v2.1.1 até a nova versão ser publicada.
+A **v2.1.6 está publicada como versão estável** no [GitHub Releases](https://github.com/leomacedo2/saque-certo/releases/tag/v2.1.6), após teste no celular pelo responsável pelo projeto. Inclui volume ajustado no toque dos pontos, opção de desligar esse som, confirmação para Desfazer pelo Voltar do Android, proteção de configurações não salvas e set único sem troca automática aos cinco.
 
-APK gerado com sucesso em 29/10/2026, compilação 3. Funciona como aplicativo independente, sem Expo Go, computador ou servidor Metro. A validação em aparelho físico ainda está pendente.
+APK da v2.1.6, compilação 9, gerado pelo Expo e disponível para download no GitHub. Funciona como aplicativo independente, sem Expo Go, computador ou servidor Metro.
 
 1. Abra este README no celular Android e toque no link de download acima.
 2. Aguarde o download e abra o arquivo `.apk` pela notificação ou pela pasta Downloads.
 3. Se o Android solicitar, permita que o navegador ou gerenciador de arquivos instale aplicativos dessa origem e retome a instalação.
-4. Toque em **Instalar** e depois em **Abrir**. Procure o nome **Saque Certo** e o ícone com as duas raquetes; confira **V2.1.1** no menu.
+4. Toque em **Instalar** e depois em **Abrir**. Procure o nome **Saque Certo** e o ícone com as duas raquetes; confira **V2.1.6** no menu.
 5. Para testar sem internet, feche o aplicativo, ative o modo avião e abra novamente. Confira pontos, saques, duplas, aquecimento, tempo técnico e som. Feche e reabra para conferir a recuperação da partida.
 
 O APK é para Android. O armazenamento é separado do Expo Go: partidas feitas nele não são transferidas automaticamente. Em futuras atualizações, instale o novo APK sobre o anterior, preservando pacote e assinatura; desinstalar ou limpar os dados apaga a partida salva.
 
-O arquivo acima está hospedado no GitHub Releases. [Detalhes da build v2.1.1](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/6c7b4903-f974-4a0a-9de9-e312deeb09ce).
+O download está hospedado no GitHub Releases e não depende do prazo de retenção do arquivo no Expo. [Detalhes da build v2.1.6](https://expo.dev/accounts/leomacedo/projects/saque-certo/builds/a7a42893-d7a7-48ca-ac2d-6e933b676d29).
 
 ## Disponibilizar o APK no GitHub Releases
 
@@ -28,8 +28,8 @@ Para quem mantém o repositório, após testar o APK:
 
 1. Faça commit e push dos arquivos desta versão para o GitHub.
 2. No repositório, abra **Releases → Draft a new release**.
-3. Escolha ou crie a tag `v2.1.1`, apontando para o commit desta versão, e use o título **Saque Certo v2.1.1**.
-4. Descreva as mudanças e anexe o instalador com o nome `SaqueCerto-v2.1.1-android.apk` na área de arquivos da Release. O APK deve ser anexado ali, sem adicioná-lo às pastas do código.
+3. Crie uma nova tag com o número da próxima versão, apontando para o commit correspondente, e use o título **Saque Certo vNÚMERO_DA_VERSÃO**. Preserve as tags e Releases anteriores.
+4. Descreva as mudanças e anexe o instalador com o nome `SaqueCerto-vNÚMERO_DA_VERSÃO-android.apk` na área de arquivos da Release. O APK deve ser anexado ali, sem adicioná-lo às pastas do código.
 5. Clique em **Publish release** quando estiver pronto para distribuir.
 6. Copie o endereço do APK anexado e substitua o link de download no início deste README. Faça commit e push dessa atualização.
 
@@ -77,7 +77,7 @@ O perfil **preview** gera APK de distribuição interna, sem cliente de desenvol
 
 Mantenha o pacote Android e a assinatura nas futuras atualizações. O EAS incrementa `android.versionCode` localmente em cada build; comite essa alteração para manter o contador. O guia completo **GUIA_APK.md** fica na subpasta de documentação da entrega em SaqueCertoBackups, fora do repositório.
 
-**Situação desta entrega:** APK v2.1.1, compilação 3, gerado com sucesso no EAS. Projeto vinculado à conta Expo `leomacedo`, com assinatura Android mantida no Expo. A v2.1.1 corrige o arquivo de dependências que impediu a instalação na primeira build; a instalação limpa foi conferida com npm 10.9.9, usado pelo servidor. O teste real sem internet deve ser feito após instalar o APK. Referência: [criar APK com EAS Build](https://docs.expo.dev/build-reference/apk/).
+**Situação desta entrega:** APK v2.1.6, compilação 9, publicado como estável no GitHub após teste no celular relatado pelo responsável pelo projeto. Projeto vinculado à conta Expo `leomacedo`, com assinatura Android mantida no Expo. Referência para futuras compilações: [criar APK com EAS Build](https://docs.expo.dev/build-reference/apk/).
 
 ## Nova partida e preparação
 
@@ -105,7 +105,7 @@ No padrão, o saque troca a cada dois pontos e a cada ponto após 10 × 10. A ca
 
 A dupla que recebeu primeiro começa sacando no set seguinte. Após confirmar a troca física de lados, escolha qual atleta dela sacará: o aplicativo calcula o recebedor como quem servia para esse atleta no set anterior. Confira a combinação e toque em **Confirmar ordem e iniciar set**. Não há escolha livre de recebedor nos sets seguintes.
 
-No último set possível, o ponto que faz alguém atingir cinco bloqueia a pontuação e abre a confirmação obrigatória. A dupla que receberá **a próxima jogada** muda sua ordem de recepção. O aviso já mostra o próximo sacador e o novo recebedor; a inversão visual ocorre ao confirmar. Essa mudança afeta toda a sequência restante e acontece uma vez. Desfazer o ponto restaura a ordem anterior e os lados, inclusive depois da confirmação.
+No último set possível das melhores de 3, 5 ou 7, com a troca decisiva ativada, o ponto que faz alguém atingir cinco bloqueia a pontuação e abre a confirmação obrigatória. A dupla que receberá **a próxima jogada** muda sua ordem de recepção. O aviso já mostra o próximo sacador e o novo recebedor; a inversão visual ocorre ao confirmar. Essa mudança afeta toda a sequência restante e acontece uma vez. Desfazer o ponto restaura a ordem anterior e os lados, inclusive depois da confirmação. O formato set único não aplica essa troca automática.
 
 Referência: [ITTF Statutes 2026, 2.13.3–2.13.7](https://documents.ittf.sport/document/389). O sistema de aceleração está fora do escopo. Desativar a troca decisiva no menu cria um **formato personalizado**, sem troca física nem mudança de recepção associada; a opção vale para a próxima partida.
 
@@ -166,7 +166,7 @@ Backups por versão ficam fora do repositório em SaqueCertoBackups, sem sobresc
 
 ## Limitações
 
-- Falta validação em Android físico: recortes/safe area, tamanhos de fonte, áudio, vibração, botão Voltar e retomada após fechamento real.
+- A v2.1.6 foi testada no celular pelo responsável pelo projeto. Esse teste não representa validação em todos os modelos e versões do Android.
 - Exportar para Android valida o empacotamento JavaScript, sem gerar APK. Expo Go precisa de versão compatível e do servidor de desenvolvimento para carregar o projeto; um app instalado independente exige compilação nativa.
 - Só uma partida e seu histórico ficam salvos. Nova partida substitui a anterior após confirmação; limpar dados ou desinstalar remove o armazenamento. Partidas muito longas aumentam o histórico.
 - Não há garantia de alarme em segundo plano, tela bloqueada ou app encerrado. A aplicação não altera o volume global.
